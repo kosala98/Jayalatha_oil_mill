@@ -1,0 +1,1621 @@
+/* ==========================================================================
+   Coconut oil mill POS — design tokens
+   Palette taken from the mill itself: palm-shade page, coconut-shell ink,
+   palm-leaf green for actions, and oil-amber reserved for money readouts.
+   ========================================================================== */
+:root {
+  --page: #edf0e8;
+  --card: #ffffff;
+  --field: #fbfcfa;
+  --ink: #2b2119; /* coconut shell */
+  --muted: #6d655b;
+  --line: #d6dcce;
+  --track: #e1e6da;
+  --palm: #2f5b3c;
+  --palm-press: #244730;
+  --palm-tint: #e3ebdf;
+  --oil: #e7b53c;
+  --oil-tint: #fbf1d6;
+  --husk: #8a6440;
+  --danger: #a5342b;
+  --danger-tint: #f6e4e1;
+  --on-ink-muted: #cbbfae;
+
+  --font-ui: 'Work Sans', 'Noto Sans Sinhala', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces', 'Noto Sans Sinhala', Georgia, serif;
+
+  /* type scale (px): 13 / 15 / 17 / 22 / 30 / 44 */
+  --t-xs: 0.8125rem;
+  --t-sm: 0.9375rem;
+  --t-md: 1.0625rem;
+  --t-lg: 1.375rem;
+  --t-xl: 1.875rem;
+  --t-2xl: 2.75rem;
+
+  --r-field: 10px;
+  --r-control: 12px;
+  --r-card: 16px;
+  --r-readout: 20px;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--page);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.6; /* Sinhala stacks need the extra leading */
+  color: var(--ink);
+  background: var(--page);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--palm);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: var(--t-xs);
+}
+.center {
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ layout */
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px calc(40px + env(safe-area-inset-bottom));
+}
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.panel {
+  padding-top: 16px;
+}
+
+/* ---------------------------------------------------------------- masthead */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(14px + env(safe-area-inset-top)) 0 10px;
+}
+
+.masthead__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.masthead__tag {
+  font-family: var(--font-ui);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--husk);
+  vertical-align: 0.2em;
+  margin-left: 2px;
+}
+
+/* -------------------------------------------------------------- status pill */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--palm);
+}
+.status--offline {
+  background: var(--track);
+}
+.status--offline .status__dot {
+  background: var(--muted);
+}
+.status--pending {
+  background: var(--oil-tint);
+  border-color: #ecd9a3;
+}
+.status--pending .status__dot {
+  background: #c9941b;
+}
+.status--failed {
+  background: var(--danger-tint);
+  border-color: #e7c2bc;
+  color: var(--danger);
+}
+.status--failed .status__dot {
+  background: var(--danger);
+}
+
+/* -------------------------------------------------------------------- tabs */
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  /* Five Sinhala labels don't fit side by side on a narrow phone, so the row
+     scrolls rather than wrapping under the sticky header. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(max-content, 1fr);
+  margin: 0 -16px;
+  padding: 0 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--page);
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs__tab {
+  position: relative;
+  min-height: 50px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  border: 0;
+  background: none;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--muted);
+}
+.tabs__tab[aria-selected='true'] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.tabs__tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--palm);
+}
+
+/* -------------------------------------------------------------------- card */
+.card {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  padding: 18px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+}
+.card--center {
+  justify-items: center;
+  padding: 28px 16px;
+}
+.card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ fields */
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.field__label {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  line-height: 1.35;
+}
+.field__error {
+  margin: 0;
+  font-size: var(--t-xs);
+  color: var(--danger);
+  line-height: 1.4;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 359px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  background: var(--field);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-field);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.input:focus-within {
+  border-color: var(--palm);
+  box-shadow: 0 0 0 3px var(--palm-tint);
+}
+.input input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.input__affix {
+  padding-left: 12px;
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+.input__affix--end {
+  padding: 0 12px 0 0;
+}
+.input--error {
+  border-color: var(--danger);
+}
+.input--error:focus-within {
+  box-shadow: 0 0 0 3px var(--danger-tint);
+}
+
+.field--big .input {
+  min-height: 64px;
+}
+.field--big .input input {
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  font-weight: 600;
+}
+
+.textarea {
+  width: 100%;
+  padding: 12px;
+  background: var(--field);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-field);
+  line-height: 1.5;
+  resize: vertical;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--palm);
+  box-shadow: 0 0 0 3px var(--palm-tint);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: var(--t-sm);
+}
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--palm);
+}
+
+/* ---------------------------------------------------------- segmented ctrl */
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--track);
+  border-radius: var(--r-control);
+}
+.segmented__option {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--muted);
+  transition: background 120ms, color 120ms;
+}
+.segmented__option[aria-checked='true'] {
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 0 var(--line), 0 0 0 1px var(--line);
+}
+.segmented--sm .segmented__option {
+  min-height: 38px;
+  padding: 4px 4px;
+  font-size: var(--t-xs);
+}
+
+/* ----------------------------------------------------------- product chips */
+.product-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.product-chip {
+  min-height: 54px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-control);
+  background: var(--card);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+}
+.product-chip[aria-checked='true'] {
+  background: var(--palm);
+  border-color: var(--palm);
+  color: #fff;
+  font-weight: 600;
+}
+/* Charcoal is a different kind of product (bulk, KG only) — shell-dark when chosen. */
+.product-chip--charcoal[aria-checked='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- readout
+   The one loud element: the mill's weighbridge display. */
+.readout {
+  display: grid;
+  gap: 2px;
+  padding: 16px 20px 18px;
+  background: var(--ink);
+  border-radius: var(--r-readout);
+  color: var(--oil);
+}
+.readout__label {
+  font-size: var(--t-sm);
+  color: var(--on-ink-muted);
+}
+.readout__value {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums lining-nums;
+  overflow-wrap: anywhere;
+}
+.readout--xl .readout__value {
+  font-size: var(--t-2xl);
+}
+.readout__currency {
+  margin-right: 8px;
+  font-family: var(--font-ui);
+  font-size: var(--t-md);
+  font-weight: 500;
+  color: var(--on-ink-muted);
+  vertical-align: 0.35em;
+}
+.readout__empty {
+  color: #6f6152;
+}
+.readout__note {
+  margin-top: 6px;
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  color: #a99c8a;
+}
+
+/* ---------------------------------------------------------------- buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: var(--r-control);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  transition: background 120ms, border-color 120ms, transform 80ms;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn--primary {
+  background: var(--palm);
+  color: #fff;
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--palm-press);
+}
+.btn--secondary {
+  background: var(--card);
+  border-color: var(--line);
+}
+.btn--quiet {
+  background: transparent;
+  color: var(--muted);
+}
+.btn--danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn--danger-quiet {
+  background: transparent;
+  color: var(--danger);
+}
+.btn--block {
+  width: 100%;
+}
+.btn--lg {
+  min-height: 58px;
+  font-size: var(--t-md);
+}
+.btn--sm {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: var(--t-xs);
+}
+
+.row-actions,
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.form-error {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-field);
+  background: var(--danger-tint);
+  color: var(--danger);
+  font-size: var(--t-sm);
+  line-height: 1.45;
+}
+
+.notice {
+  gap: 10px;
+  justify-items: start;
+}
+.notice p {
+  margin: 0;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ admin */
+.admin-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pinpad {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 300px;
+}
+.pinpad__prompt {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+.pinpad__dots {
+  display: flex;
+  gap: 14px;
+  min-height: 16px;
+}
+.pinpad__dot {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+.pinpad__dot.is-filled {
+  background: var(--ink);
+}
+.pinpad__error {
+  min-height: 1.4em;
+  text-align: center;
+}
+.pinpad__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+.pinpad__key {
+  min-height: 64px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--page);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  font-variant-numeric: lining-nums;
+}
+.pinpad__key:active:not(:disabled) {
+  background: var(--track);
+}
+.pinpad__key--quiet {
+  background: transparent;
+  border-color: transparent;
+  font-family: var(--font-ui);
+  font-size: 1.375rem;
+  color: var(--muted);
+}
+.pinpad__key--go {
+  background: var(--palm);
+  border-color: var(--palm);
+  color: #fff;
+}
+.pinpad__key:disabled {
+  opacity: 0.45;
+}
+
+.figures {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px 16px;
+}
+.figure {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.figure__label {
+  font-size: var(--t-xs);
+  color: var(--muted);
+  line-height: 1.35;
+}
+.figure__value {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.figure__sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.figure--warn .figure__value {
+  color: var(--danger);
+}
+
+.ledger {
+  display: grid;
+  margin: 0;
+}
+.ledger > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--track);
+  font-size: var(--t-sm);
+}
+.ledger dt {
+  color: var(--muted);
+}
+.ledger dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.ledger__total {
+  border-bottom: 0 !important;
+  border-top: 2px solid var(--ink);
+  margin-top: 4px;
+  padding-top: 10px !important;
+  font-weight: 600;
+}
+.ledger__total dt {
+  color: var(--ink) !important;
+}
+
+.breakdown {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.breakdown li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--track);
+}
+.breakdown li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.breakdown__name {
+  font-weight: 500;
+}
+.breakdown__amount {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------------- history */
+.history {
+  gap: 0;
+  padding: 0;
+  list-style: none;
+}
+.history__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--track);
+}
+.history__row:first-child {
+  border-top: 0;
+}
+.history__main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.history__title {
+  font-weight: 600;
+  line-height: 1.35;
+}
+.history__detail {
+  font-size: var(--t-sm);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.history__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.history__reason {
+  font-size: var(--t-xs);
+  color: var(--danger);
+}
+.history__side {
+  display: grid;
+  justify-items: end;
+  align-content: start;
+  gap: 4px;
+}
+.history__amount {
+  font-size: var(--t-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.history__row.is-deleted .history__title,
+.history__row.is-deleted .history__detail {
+  opacity: 0.6;
+}
+.history__row.is-deleted .history__amount {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid #d8c7b3;
+  border-radius: 6px;
+  color: var(--husk);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.badge--deleted {
+  border-color: #e7c2bc;
+  color: var(--danger);
+}
+
+.is-loading {
+  opacity: 0.6;
+  transition: opacity 150ms;
+}
+
+/* ------------------------------------------------------------------ outbox */
+.outbox-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.outbox-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-field);
+}
+.outbox-item--failed {
+  border-color: #e7c2bc;
+  background: #fdf7f6;
+}
+.outbox-item__main {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ dialog */
+.dialog {
+  width: min(480px, calc(100vw - 24px));
+  max-height: calc(100dvh - 48px);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-readout);
+  background: var(--card);
+  color: var(--ink);
+}
+.dialog::backdrop {
+  background: rgba(43, 33, 25, 0.45);
+}
+.dialog__body {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+.dialog__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.dialog__summary {
+  margin: 0;
+  line-height: 1.5;
+}
+.dialog p {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------- toast */
+.toast-region {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.toast {
+  max-width: 488px;
+  width: 100%;
+  padding: 14px 16px;
+  border-left: 5px solid var(--palm);
+  border-radius: var(--r-control);
+  background: var(--ink);
+  color: #fff;
+  font-size: var(--t-sm);
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(43, 33, 25, 0.25);
+  pointer-events: auto;
+  animation: toast-in 180ms ease-out;
+}
+.toast--success {
+  border-left-color: #7fb08a;
+}
+.toast--queued {
+  border-left-color: var(--oil);
+}
+.toast--error {
+  border-left-color: #e0786e;
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 12px 10px 14px;
+  border-radius: var(--r-control);
+  background: var(--oil-tint);
+  font-size: var(--t-sm);
+}
+
+/* ------------------------------------------------------------ preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (min-width: 700px) {
+  /* Tablet at the counter: a touch more air, same single column. */
+  .app {
+    padding-top: 12px;
+  }
+  .card {
+    padding: 22px 20px;
+  }
+}
+
+/* ------------------------------------------------------------- pairing */
+/* The code is read off one screen and typed into another, so it gets the
+   same treatment as money: display face, wide tracking, unmistakable. */
+.field--code input {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.field--code input::placeholder {
+  letter-spacing: 0.1em;
+  font-weight: 400;
+  color: var(--muted);
+  opacity: 0.55;
+}
+.card--code {
+  border-color: var(--oil);
+  box-shadow: 0 0 0 3px var(--oil-tint);
+}
+.code-display {
+  margin: 4px 0 2px;
+  font-family: var(--font-display);
+  font-size: var(--t-xl);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  user-select: all;
+}
+.history__title .badge {
+  margin-inline-start: 6px;
+}
+
+/* ------------------------------------------------- customers & credit */
+.picker {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.select {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: var(--t-md);
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-sm);
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-inline-end: 36px;
+}
+.select:focus-visible {
+  outline: 2px solid var(--palm);
+  outline-offset: 1px;
+}
+.customer-list {
+  padding: 0;
+  list-style: none;
+}
+.customer-row {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 4px;
+  min-height: 56px;
+  text-align: start;
+  background: none;
+  border: 0;
+  border-block-end: 1px solid var(--rule-soft);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.customer-list li:last-child .customer-row {
+  border-block-end: 0;
+}
+.customer-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.customer-row__name {
+  font-weight: 600;
+}
+/* Who owes whom is the whole point of the screen, so it carries colour. */
+.balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: end;
+  white-space: nowrap;
+}
+.balance__label {
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.balance__amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.balance--owed .balance__amount {
+  color: var(--husk);
+}
+.balance--owing .balance__amount {
+  color: var(--danger);
+}
+.balance--settled {
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.balance-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  margin-block: 8px;
+  background: var(--paper-sunk);
+  border-radius: var(--r-sm);
+}
+.balance-panel__label {
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+.history__amount--payment {
+  color: var(--palm);
+}
+.history--plain {
+  padding: 0;
+  list-style: none;
+}
+.history__side--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.badge--temp {
+  background: var(--oil-tint);
+  color: var(--husk);
+}
+.notice--temp {
+  padding: 10px 12px;
+  font-size: var(--t-sm);
+  color: var(--husk);
+  background: var(--oil-tint);
+  border-radius: var(--r-sm);
+}
+.figures--compact .figures__value,
+.figures--compact dd {
+  font-size: var(--t-md);
+}
+
+/* --------------------------------------------- split payments & sign-in */
+.split {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  margin-block-start: 8px;
+  background: var(--paper-sunk, var(--field));
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+/* The remainder is the number the cashier watches while splitting a payment. */
+.split__remainder {
+  margin: 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--husk);
+}
+.split__remainder.is-balanced {
+  color: var(--palm);
+}
+.tabs__signout {
+  margin-inline-start: auto;
+  padding: 0 4px;
+  font: inherit;
+  font-size: var(--t-xs);
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.tabs__tab--temp {
+  color: var(--husk);
+}
+.history__split {
+  font-variant-numeric: tabular-nums;
+  color: var(--husk);
+}
+
+/* --------------------------------------------------------- price book */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.prices {
+  display: grid;
+  gap: 14px;
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-block: 8px;
+}
+.prices__group {
+  display: grid;
+  gap: 6px;
+}
+.prices__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-md);
+}
+.prices__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 10px;
+  align-items: center;
+}
+.prices__row .field {
+  margin: 0;
+}
+.prices__label {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--t-sm);
+}
+.prices__hint {
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+/* Sale and purchase screens: a quiet line under the price field. */
+.price-note {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: -4px 0 8px;
+  font-size: var(--t-xs);
+  color: var(--muted);
+}
+.masthead__prices {
+  padding: 6px 10px;
+  font: inherit;
+  font-size: var(--t-xs);
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.masthead__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ------------------------------------------- optional extras on a form */
+.drawer {
+  padding: 10px 12px;
+  margin-block: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md, 12px);
+}
+.drawer__summary {
+  font-weight: 600;
+  font-size: var(--t-sm);
+  cursor: pointer;
+  list-style: none;
+}
+.drawer__summary::-webkit-details-marker {
+  display: none;
+}
+.drawer__summary::before {
+  content: '+ ';
+  color: var(--palm);
+}
+.drawer[open] .drawer__summary::before {
+  content: '− ';
+}
+
+/* ------------------------------------------- a visit in progress */
+.basket-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: start;
+  font: inherit;
+  color: var(--husk);
+  background: var(--oil-tint);
+  border: 1px solid var(--oil);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.basket-strip__lines {
+  font-size: var(--t-xs);
+}
+.basket-strip__net {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.basket-strip__go {
+  margin-inline-start: auto;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--palm);
+}
+/* The visit tab only exists while one is open, so it says so. */
+.tabs__tab--live {
+  color: var(--husk);
+}
+.tabs__tab--live::before {
+  content: '● ';
+  color: var(--oil);
+  font-size: 0.7em;
+}
+/* The line being typed, kept above the visit balance. */
+.readout__sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-block-end: 8px;
+  margin-block-end: 8px;
+  font-size: var(--t-sm);
+  color: var(--on-ink-muted);
+  border-block-end: 1px solid rgba(203, 191, 174, 0.25);
+}
+.readout__subValue {
+  font-variant-numeric: tabular-nums;
+}
+/* Settling a visit takes over the screen, so nothing else can be half-edited behind it. */
+.panel--overlay {
+  padding-block-start: 8px;
+}
+.group-title {
+  margin: 12px 0 2px;
+  font-family: var(--font-display);
+  font-size: var(--t-sm);
+  color: var(--muted);
+}
+.basket-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+}
+.basket-strip__open {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.basket-strip__discard {
+  padding: 0 14px;
+  font: inherit;
+  font-size: var(--t-md);
+  color: var(--husk);
+  background: none;
+  border: 0;
+  border-inline-start: 1px solid var(--oil);
+  cursor: pointer;
+}
+
+/* ------------------------------------------- customer profile summary */
+.summary {
+  display: grid;
+  gap: 2px;
+  margin-block: 4px;
+}
+.summary__title {
+  margin: 14px 0 4px;
+  font-family: var(--font-display);
+  font-size: var(--t-sm);
+  color: var(--muted);
+  border-block-end: 1px solid var(--line);
+  padding-block-end: 4px;
+}
+.summary__title:first-child {
+  margin-block-start: 4px;
+}
+.summary__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding-block: 6px;
+  align-items: baseline;
+}
+.summary__label {
+  font-size: var(--t-sm);
+}
+.summary__value {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+.summary__row--strong .summary__value {
+  font-weight: 600;
+}
+.summary__hint {
+  grid-column: 1 / -1;
+  font-size: var(--t-xs);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.history__qty {
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================================================================
+   The 80mm bill. Black and white only: thermal paper has no colour, and the
+   print rules below hide the whole app so only this reaches the roll.
+   ======================================================================== */
+.bill {
+  width: 302px;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 14px 12px 18px;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+  line-height: 1.45;
+  border: 1px solid var(--line);
+}
+.bill * {
+  color: #000;
+}
+.bill__mill {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.2;
+}
+.bill__addr {
+  margin: 2px 0 0;
+  font-size: 12px;
+  text-align: center;
+}
+.bill__trade {
+  margin: 7px 0;
+  padding: 5px 0;
+  font-size: 12px;
+  text-align: center;
+  border-block: 1px dashed #000;
+}
+.bill__contact {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 0;
+  font-size: 12px;
+}
+.bill__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+  padding-top: 7px;
+  border-top: 1px solid #000;
+  font-size: 12px;
+}
+.bill__who {
+  margin: 3px 0 0;
+  font-size: 13px;
+}
+.bill__sec {
+  margin-top: 10px;
+}
+.bill__secTitle {
+  margin: 0 0 3px;
+  font-size: 12px;
+  font-weight: 700;
+  border-bottom: 1px solid #000;
+  padding-bottom: 2px;
+}
+.bill__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 10px;
+  padding: 4px 0;
+}
+.bill__rowName {
+  grid-column: 1;
+  grid-row: 1;
+}
+.bill__rowQty {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.bill__rowAmt {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.bill__sum {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #000;
+  font-size: 12.5px;
+}
+.bill__sum span:nth-child(even) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.bill__net {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 6px 0;
+  border-block: 1px dashed #000;
+}
+.bill__netLabel {
+  font-size: 13px;
+  font-weight: 600;
+}
+.bill__netAmt {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.bill__how {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.bill__conv {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px dashed #000;
+  font-size: 12px;
+}
+.bill__convTitle {
+  margin: 0 0 3px;
+  font-weight: 600;
+}
+.bill__conv div,
+.bill__debt div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+/* The debt is the line people come back and argue about, so it gets a box. */
+.bill__debt {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: 1px solid #000;
+  font-size: 12.5px;
+}
+.bill__debt div:last-child {
+  font-weight: 700;
+}
+.bill__foot {
+  margin: 12px 0 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media print {
+  /* Only the receipt goes to the roll — no tabs, no buttons, no page chrome. */
+  body * {
+    visibility: hidden;
+  }
+  #bill-print,
+  #bill-print * {
+    visibility: visible;
+  }
+  #bill-print {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    width: 72mm;
+    padding: 3mm 2mm 6mm;
+    border: 0;
+  }
+}
+.bill__rowHow {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+/* How one line was paid, printed under the quantity. */
+.bill__rowHow {
+  grid-column: 1;
+  grid-row: 3;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.bill__row:has(.bill__rowHow) .bill__rowAmt {
+  grid-row: 1 / span 3;
+}
+/* The three ways the money moves, under the headline figure. */
+.readout__breakdown {
+  display: grid;
+  gap: 2px;
+  margin: 10px 0 0;
+  padding-block-start: 8px;
+  border-block-start: 1px solid rgba(203, 191, 174, 0.25);
+  font-size: var(--t-sm);
+}
+.readout__breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.readout__breakdown dt {
+  color: var(--on-ink-muted);
+}
+.readout__breakdown dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--on-ink-muted);
+}
+/* Cash is what the drawer has to match, so it carries the oil colour. */
+.readout__breakdown .is-cash dt,
+.readout__breakdown .is-cash dd {
+  color: var(--oil);
+  font-weight: 600;
+}
+/* The balance taken apart: cash, cheque, credit — cash carries the emphasis. */
+.readout__parts {
+  display: grid;
+  gap: 3px;
+  margin-block-start: 8px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid rgba(203, 191, 174, 0.25);
+  font-size: var(--t-sm);
+  color: var(--on-ink-muted);
+}
+.readout__part {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.readout__partValue {
+  font-variant-numeric: tabular-nums;
+}
+.readout__part--strong {
+  color: var(--oil);
+  font-weight: 600;
+}

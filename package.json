@@ -1,0 +1,13 @@
+{
+  "name": "coconut-pos",
+  "private": true,
+  "description": "Coconut oil mill POS — helper scripts. The client and server are independent npm projects.",
+  "scripts": {
+    "install:all": "npm --prefix server ci && npm --prefix client ci",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "test": "npm --prefix server test",
+    "build:single": "npm --prefix client ci && npm --prefix client run build && npm --prefix server ci --include=dev && npm --prefix server run build",
+    "start:single": "npm --prefix server start"
+  }
+}

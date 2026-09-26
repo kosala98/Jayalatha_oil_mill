@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#2B2119"/>
+  <!-- coconut half, cut face up -->
+  <path d="M96 244h320c0 92-72 164-160 164S96 336 96 244z" fill="#6B4A2E"/>
+  <path d="M120 244h272c0 76-60 136-136 136s-136-60-136-136z" fill="#F7F4EC"/>
+  <!-- oil drop rising from it -->
+  <path d="M256 92c0 0-62 72-62 112a62 62 0 0 0 124 0c0-40-62-112-62-112z" fill="#E7B53C"/>
+</svg>
