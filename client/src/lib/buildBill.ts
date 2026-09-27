@@ -1,5 +1,5 @@
 import { api } from '../api/endpoints';
-import type { BillData, BillItem } from '../domain/bill';
+import type { BillItem } from '../domain/bill';
 import { conversionFor, describePayment } from '../domain/bill';
 import { showBill } from '../domain/billStore';
 import { formatMoney } from './numbers';

@@ -14,7 +14,9 @@ npm run secrets:push         # upload supabase/functions/.env as function secret
 npm run deploy:functions     # deploy the api function
 ```
 
-Client type-check: `npx --prefix client tsc -p client/tsconfig.json --noEmit`. It currently reports ~70 errors from before the Supabase move; compare the count before and after a change rather than expecting zero.
+Client type-check: `npx --prefix client tsc -p client/tsconfig.json --noEmit` — must stay at zero errors, because `npm run build` (what Vercel runs) type-checks first.
+
+Vercel builds from the repo root with `vercel.json` (installs and builds `client/`, serves `client/dist`), or with Root Directory `client` using `client/vercel.json`. Keep the rewrites and headers in both files the same.
 
 ## Layout
 

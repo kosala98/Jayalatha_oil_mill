@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { describePayment, newBillNo } from '../domain/bill';
-import { type BasketLine, basketCustomerId, basketNet, basketPayments, clearBasket, removeLine, useBasket } from '../domain/basket';
+import { basketCustomerId, basketNet, basketPayments, clearBasket, removeLine, useBasket } from '../domain/basket';
 import { useToast } from '../components/Toast';
 import { S, t } from '../i18n';
 import { uuid } from '../lib/ids';

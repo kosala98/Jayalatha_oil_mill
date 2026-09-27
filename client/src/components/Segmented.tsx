@@ -1,22 +1,22 @@
 import { type KeyboardEvent, useId, useRef } from 'react';
 
-export interface SegmentOption<T extends string> {
+export interface SegmentOption<T extends string | number> {
   value: T;
   label: string;
 }
 
-interface Props<T extends string> {
+interface Props<T extends string | number> {
   label: string;
   options: readonly SegmentOption<T>[];
   value: T;
-  onChange(value: T): void;
+  onChange(value: NoInfer<T>): void;
   /** Visually hide the label (still read by screen readers). */
   hideLabel?: boolean;
   size?: 'md' | 'sm';
 }
 
 /** A radio group drawn as a segmented control. Arrow keys move the selection. */
-export function Segmented<T extends string>({ label, options, value, onChange, hideLabel, size = 'md' }: Props<T>) {
+export function Segmented<T extends string | number>({ label, options, value, onChange, hideLabel, size = 'md' }: Props<T>) {
   const id = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 

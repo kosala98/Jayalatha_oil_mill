@@ -136,7 +136,7 @@ export function SaleScreen() {
       price: input.pricePerUnit,
       containerCount: input.containerCount,
       containerPrice: input.containerPrice,
-      total,
+      total: total ?? '0',
     });
     setQuantity('');
     setCustomName('');
@@ -189,7 +189,7 @@ export function SaleScreen() {
               ? `${S.labels.bottleSizes[input.bottleSize]} ${S.labels.units.BOTTLE}`
               : S.labels.units[input.unitType]
           } × ${formatMoney(input.pricePerUnit)}`,
-          amount: goodsTotal,
+          amount: goodsTotal ?? '0',
         },
         ...(Number(containerCount || 0) > 0
           ? [
@@ -197,7 +197,7 @@ export function SaleScreen() {
                 side: 'out' as const,
                 name: unitType === 'KG' ? S.sale.containerCountCan : S.sale.containerCountBottle,
                 detail: `${containerCount} × ${formatMoney(containerPrice || '0')}`,
-                amount: containersTotal,
+                amount: containersTotal ?? '0',
               },
             ]
           : []),
@@ -207,8 +207,8 @@ export function SaleScreen() {
         customerId: input.customerId,
         items,
         inTotal: '0',
-        outTotal: total,
-        net: total,
+        outTotal: total ?? '0',
+        net: total ?? '0',
         how: describePayment(parts, formatMoney),
         balanceEffect: Number(parts.creditAmount),
         kgPriceForConversion: showConversion && unitType === 'KG' ? price : null,
@@ -358,7 +358,7 @@ export function SaleScreen() {
         )}
 
         <PaymentFields
-          total={total}
+          total={total ?? ''}
           value={payment}
           onChange={(next) => {
             setPayment(next);

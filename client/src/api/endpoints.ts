@@ -9,7 +9,6 @@ import type {
   Purchase,
   Sale,
   Stats,
-  TemporaryAccess,
 } from '../domain/types';
 import { request } from './http';
 

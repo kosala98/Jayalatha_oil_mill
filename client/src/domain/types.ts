@@ -119,25 +119,39 @@ export interface Stats {
 }
 
 // ---- Create payloads (clientId + occurredAt are added by the outbox) ----
-export interface SaleInput {
+/** How a sale or purchase is paid: the three parts always add up to its total. */
+export interface PaymentParts {
+  cashAmount: string;
+  chequeAmount: string;
+  creditAmount: string;
+  chequeNumber: string | null;
+  chequeDepositDate: string | null;
+  customerId: string | null;
+}
+export interface SaleInput extends PaymentParts {
   /** Ties this row to the printed receipt. */
   billNo?: string;
   productCode: string;
   unitType: UnitType;
   bottleSize: BottleSize | null;
+  /** Required for the "වෙනත්" product, null otherwise. */
+  customName: string | null;
   quantity: string;
   pricePerUnit: string;
-  paymentMethod: PaymentMethod;
-  chequeNumber: string | null;
+  /** Empty bottles or cans sold with the oil. */
+  containerCount: number;
+  containerPrice: string;
 }
-export interface PurchaseInput {
+export interface PurchaseInput extends PaymentParts {
   billNo?: string;
   material: PurchaseMaterial;
   customName: string | null;
+  /** Scale reading, sent only when weight was deducted. */
+  grossKg?: string;
+  deductions?: Deduction[];
+  /** Net weight: what the price applies to. */
   quantityKg: string;
   pricePerKg: string;
-  paymentMethod: PaymentMethod;
-  chequeNumber: string | null;
 }
 export interface CashEntryInput {
   type: CashEntryType;

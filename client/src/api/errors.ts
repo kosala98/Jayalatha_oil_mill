@@ -15,14 +15,11 @@ export function describeError(err: unknown): string {
     case 'WRONG_PIN':
     case 'WRONG_CREDENTIALS':
     case 'TOO_MANY_ATTEMPTS':
-    case 'ADMIN_NOT_CONFIGURED':
-    case 'ADMIN_SESSION_INVALID':
-    case 'ADMIN_SESSION_REQUIRED':
     case 'ALREADY_DELETED':
     case 'SESSION_REQUIRED':
     case 'ADMIN_REQUIRED':
     case 'PAYMENT_PARTS_MISMATCH':
-      return S.errors[err.code === 'ADMIN_SESSION_REQUIRED' ? 'ADMIN_SESSION_INVALID' : err.code];
+      return S.errors[err.code];
     default:
       return t(S.errors.UNKNOWN, { code: err.code });
   }

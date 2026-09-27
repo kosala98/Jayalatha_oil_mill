@@ -414,7 +414,7 @@ export const si = {
     byProduct: 'නිෂ්පාදන අනුව',
   },
   history: {
-    types: { sale: 'විකුණුම්', purchase: 'මිලදී ගැනීම්', cash: 'මුදල්' },
+    types: { sale: 'විකුණුම්', purchase: 'මිලදී ගැනීම්', cash: 'මුදල්', payment: 'ගෙවීම්', customer: 'ගනුදෙනුකරු' },
     period: 'කාල සීමාව',
     type: 'ගනුදෙනු වර්ගය',
     showDeleted: 'මකා දැමූ ඒවාද පෙන්වන්න',

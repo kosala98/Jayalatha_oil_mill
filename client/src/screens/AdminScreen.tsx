@@ -21,7 +21,7 @@ export function AdminScreen() {
   const temporary = isTemporaryAdmin;
   const allowed = temporary ? TEMPORARY_VIEWS : ALL_VIEWS;
   const views = allowed.map((v) => ({ value: v, label: S.admin.views[v] }));
-  const current = allowed.includes(view as (typeof allowed)[number]) ? view : 'stats';
+  const current = (allowed as readonly View[]).includes(view) ? view : 'stats';
   const endsAt = temporary ? session.temporaryAdminUntil ?? session.expiresAt : session.expiresAt;
 
   return (

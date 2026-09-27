@@ -11,11 +11,16 @@ import { S } from '../../i18n';
 import { formatMoney, formatStamp, formatQty } from '../../lib/numbers';
 import { PeriodPicker } from './PeriodPicker';
 
-type AnyRecord = HistoryRecord[HistoryKind];
+/** The history screen lists sales, purchases and cash entries (not settlements). */
+type ListedKind = Exclude<HistoryKind, 'payment'>;
+type AnyRecord = HistoryRecord[ListedKind];
 const KINDS = (['sale', 'purchase', 'cash'] as const).map((k) => ({ value: k, label: S.history.types[k] }));
 const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === code)?.nameSi ?? code;
 
-function describe(kind: HistoryKind, r: AnyRecord): { title: string; detail: string; amount: string; cheque: string | null } {
+function describe(
+  kind: HistoryKind,
+  r: AnyRecord,
+): { title: string; detail: string; amount: string; cheque: string | null; split: string | null } {
   if (kind === 'sale') {
     const s = r as Sale;
     const unit = s.unitType === 'BOTTLE' && s.bottleSize
@@ -56,12 +61,12 @@ function splitLabel(r: { cashAmount: string; chequeAmount: string; creditAmount:
 export function HistoryView() {
   const { session, handleAuthError } = useSession();
   const toast = useToast();
-  const [kind, setKind] = useState<HistoryKind>('sale');
+  const [kind, setKind] = useState<ListedKind>('sale');
   const [period, setPeriod] = useState<Period>('today');
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [items, setItems] = useState<AnyRecord[]>([]);
   // Which kind `items` belongs to, so a tab switch never renders sales as purchases for a frame.
-  const [itemsKind, setItemsKind] = useState<HistoryKind>('sale');
+  const [itemsKind, setItemsKind] = useState<ListedKind>('sale');
   const [cursor, setCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

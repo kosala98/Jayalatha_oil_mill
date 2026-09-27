@@ -16,7 +16,7 @@ import { LoginScreen } from './screens/LoginScreen';
 import { PurchaseScreen } from './screens/PurchaseScreen';
 import { SaleScreen } from './screens/SaleScreen';
 
-type Tab = 'sale' | 'purchase' | 'cash' | 'customers' | 'admin';
+type Tab = 'sale' | 'purchase' | 'cash' | 'combined' | 'customers' | 'admin';
 const COUNTER_TABS: Tab[] = ['sale', 'purchase', 'cash', 'customers'];
 
 export function App() {

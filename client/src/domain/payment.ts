@@ -55,7 +55,7 @@ const money = (v: string) => {
 };
 
 /** The three amounts to send, given the mode and the transaction total. */
-export function splitParts(v: PaymentValue, total: string): { cashAmount: string; chequeAmount: string; creditAmount: string } {
+export function splitParts(v: PaymentValue, total: string | null): { cashAmount: string; chequeAmount: string; creditAmount: string } {
   const whole = total && total !== '0' ? total : '0';
   switch (v.mode) {
     case 'CASH':
@@ -70,12 +70,12 @@ export function splitParts(v: PaymentValue, total: string): { cashAmount: string
 }
 
 /** What is still unaccounted for in a split. Negative means the parts overshoot. */
-export function remainder(v: PaymentValue, total: string): number {
+export function remainder(v: PaymentValue, total: string | null): number {
   const parts = splitParts(v, total);
   return Number(total || 0) - (Number(parts.cashAmount) + Number(parts.chequeAmount) + Number(parts.creditAmount));
 }
 
-export function validatePayment(v: PaymentValue, total: string): PaymentErrors | null {
+export function validatePayment(v: PaymentValue, total: string | null): PaymentErrors | null {
   const errors: PaymentErrors = {};
   const parts = splitParts(v, total);
   const hasCheque = Number(parts.chequeAmount) > 0;
@@ -94,7 +94,7 @@ export function validatePayment(v: PaymentValue, total: string): PaymentErrors |
 }
 
 /** The payment fields the API expects. Cheque details are dropped without a cheque part. */
-export function paymentPayload(v: PaymentValue, total: string) {
+export function paymentPayload(v: PaymentValue, total: string | null) {
   const parts = splitParts(v, total);
   const hasCheque = Number(parts.chequeAmount) > 0;
   return {

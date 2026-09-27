@@ -116,7 +116,7 @@ export function PurchaseScreen() {
       deductions: input.deductions,
       quantityKg: input.quantityKg,
       price: input.pricePerKg,
-      total,
+      total: total ?? '0',
     });
     setQuantity('');
     setDeductions({ MOISTURE: '', SACK: '', SPOILED: '', DUST: '', OTHER: '' });
@@ -168,12 +168,12 @@ export function PurchaseScreen() {
             detail: usingDeductions
               ? `${S.deductions.gross} ${quantity} KG − ${S.deductions.totalDeducted} ${deductedKg} = ${netKg} KG × ${formatMoney(input.pricePerKg)}`
               : `${input.quantityKg} KG × ${formatMoney(input.pricePerKg)}`,
-            amount: total,
+            amount: total ?? '0',
           },
         ],
-        inTotal: total,
+        inTotal: total ?? '0',
         outTotal: '0',
-        net: total,
+        net: total ?? '0',
         how: describePayment(parts, formatMoney),
         // A credit purchase means the mill owes them, so the balance moves down.
         balanceEffect: -Number(parts.creditAmount),
@@ -264,7 +264,7 @@ export function PurchaseScreen() {
         )}
 
         <PaymentFields
-          total={total}
+          total={total ?? ''}
           value={payment}
           onChange={(next) => {
             setPayment(next);

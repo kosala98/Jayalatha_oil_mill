@@ -66,7 +66,7 @@ Or from the repo root: `npm run db:push`, `npm run secrets:push`, `npm run deplo
 
 ### 2. Frontend — Vercel
 
-1. New Project → import the repo, set **Root Directory** to `client`. Vercel detects Vite; `client/vercel.json` adds the SPA rewrite and correct caching for the service worker.
+1. New Project → import the repo. Either set **Root Directory** to `client`, or leave it at the repo root — the root `vercel.json` then builds `client/` and serves `client/dist`. Vercel detects Vite; `client/vercel.json` adds the SPA rewrite and correct caching for the service worker.
 2. Environment Variables → add `VITE_API_URL` = `https://<project-ref>.supabase.co/functions/v1`.
 3. Deploy, then put the Vercel URL into the function's `CORS_ORIGINS`: `npx supabase secrets set CORS_ORIGINS=https://your-app.vercel.app`.
 4. On the counter phone/tablet, open the site and use "Add to Home Screen". It then opens full-screen and works offline.
@@ -215,7 +215,6 @@ corrections and lent admin access.
 
 ## Known limits and next steps
 
-- `npm --prefix client run build` runs `tsc` first, and the client still has TypeScript errors from before the move to Supabase (for example, the request helper's method type does not include `PUT`/`PATCH`). Until they are fixed, the Vercel build fails; `vite build` on its own works.
 - A customer must be created while online: a credit sale needs a real customer id to point at. Sales, purchases, cash entries and settlements all still queue offline as before.
 - The `user` account is shared by whoever works the counter, so the audit log records the browser install that recorded each row, not a named person. If a member of staff leaves, change its password — every session opened with the old one ends at once.
 - The stats, history and settings screens need a connection; only recording transactions works offline.
