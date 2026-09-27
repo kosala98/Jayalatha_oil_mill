@@ -8,6 +8,8 @@ export type Role = 'USER' | 'ADMIN';
 export interface Session {
   token: string;
   role: Role;
+  /** The account that signed in ("admin", "user"). */
+  username?: string;
   expiresAt: string;
   /** When set and in the future, a counter session may open the admin screens. */
   temporaryAdminUntil?: string | null;
@@ -15,7 +17,7 @@ export interface Session {
 
 interface SessionContextValue {
   session: Session | null;
-  login(pin: string): Promise<void>;
+  login(username: string, password: string): Promise<void>;
   logout(): void;
   replace(session: Session): void;
   setTemporaryAdminUntil(until: string | null): void;
@@ -23,7 +25,7 @@ interface SessionContextValue {
   canSeeAdmin: boolean;
   /** True when that is only because the owner opened a window. */
   isTemporaryAdmin: boolean;
-  /** Call from catch blocks: signs out on 401 so the PIN pad reappears. */
+  /** Call from catch blocks: signs out on 401 so the sign-in screen reappears. */
   handleAuthError(err: unknown): boolean;
 }
 
@@ -33,7 +35,7 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 /**
  * The counter signs in once and stays signed in through the day, so its session is
  * kept on the device. An admin session is never stored: closing the tab, reloading,
- * or half an hour passing all bring back the PIN pad.
+ * or half an hour passing all bring back the sign-in screen.
  */
 function readStored(): Session | null {
   try {
@@ -84,8 +86,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [session, store]);
 
   const login = useCallback(
-    async (pin: string) => {
-      store(await api.login(pin));
+    async (username: string, password: string) => {
+      store(await api.login(username, password));
     },
     [store],
   );

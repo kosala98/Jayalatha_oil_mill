@@ -1,0 +1,10 @@
+# Supabase CLI project config. Only the function settings matter here; link the project
+# with `supabase link --project-ref <ref>` and the rest comes from the dashboard.
+project_id = "coconut-pos"
+
+[functions.api]
+# The app signs its own PIN sessions; Supabase Auth JWTs are not used. The function
+# checks every token itself, so the gateway must let requests through unchecked.
+verify_jwt = false
+import_map = "./functions/api/deno.json"
+entrypoint = "./functions/api/index.ts"

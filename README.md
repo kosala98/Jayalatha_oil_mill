@@ -1,146 +1,122 @@
 # පොල් තෙල් මෝල — Coconut Oil Mill POS
 
-A production rebuild of the single-file prototype: React 18 + TypeScript PWA at the counter, Express + Prisma API, PostgreSQL on Supabase or Neon. Sales, purchases and cash entries keep working with no internet and sync when the connection returns.
+A production rebuild of the single-file prototype: a React 18 + TypeScript PWA at the counter (hosted on Vercel) and the API as one Supabase Edge Function (Deno + Hono) in front of Supabase Postgres. Sales, purchases and cash entries keep working with no internet and sync when the connection returns.
 
 ```
 coconut-pos/
-├── server/                 Express API (Node 20+, TypeScript, Prisma)
-│   ├── prisma/
-│   │   ├── schema.prisma   Domain model
-│   │   ├── migrations/     init + CHECK constraints / immutability triggers
-│   │   └── seed.ts         Product catalog + first admin PIN
-│   ├── scripts/set-pin.ts  PIN recovery tool
-│   └── src/
-│       ├── routes/         auth, sales, purchases, cash-entries, customers, cheques, stats, products
-│       ├── services/       stats, charcoal stock + lock, audit log
-│       └── lib/            validation (zod), decimal maths, periods, catalog
-└── client/                 React PWA (Vite)
+├── supabase/                 Backend — deployed to Supabase
+│   ├── config.toml           Function settings (verify_jwt = false: the app signs its own sessions)
+│   ├── migrations/           Schema, CHECK constraints, immutability triggers, RLS, accounts, product catalog
+│   └── functions/api/        The whole REST API as one edge function
+│       ├── index.ts          Hono app: CORS, routing, error shape
+│       ├── routes/           auth, sales, purchases, cash-entries, customers, cheques, stats, products, prices, bills
+│       ├── services/         stats, charcoal stock + lock, customer balances, audit log
+│       ├── middleware/       sessions, per-IP sign-in rate limit (kept in Postgres)
+│       └── lib/              validation (zod), decimal maths, periods, catalog
+└── client/                   Frontend — deployed to Vercel
     └── src/
-        ├── offline/        IndexedDB outbox + sync
-        ├── screens/        Login, Sale, Purchase, Cash, Customers, Admin (Stats, History, Cheques, Settings)
-        ├── components/     Segmented control, fields, readout, PIN pad, dialogs
-        └── i18n/si.ts      Every UI string, ready for an en.ts later
+        ├── offline/          IndexedDB outbox + sync
+        ├── screens/          Login, Sale, Purchase, Cash, Customers, Admin (Stats, History, Cheques, Settings)
+        ├── components/       Segmented control, fields, readout, dialogs
+        └── i18n/si.ts        Every UI string, ready for an en.ts later
 ```
 
-## Local setup
+The edge function talks to Postgres directly (postgres.js over `SUPABASE_DB_URL`), not through the Supabase REST API, so transactions, the charcoal advisory lock and the single-snapshot stats are real database transactions.
 
-> If the database step gives trouble, run `npm run check` in `server/` — it reads your
-> `.env`, says exactly what is wrong in plain words (placeholder left in, a `/` in the
-> password, wrong pooler port, IPv6-only host), and then tries the connection.
+## Accounts
 
+Sign-in is a username and a password, checked against the `app_users` table:
 
-You need Node 20+ and a Postgres database. The quickest is a free Neon or Supabase project; a local Postgres works too.
+| Username | First password | Opens |
+|---|---|---|
+| `admin` | `9999` | The counter screens plus පරිපාලක (the books, cheques, settings) |
+| `user` | `1234` | The counter screens |
 
-```bash
-# 1. API
-cd server
-cp .env.example .env          # fill in DATABASE_URL, DIRECT_URL, JWT_SECRET, the two PINs
-npm install
-npm run check                 # reads .env and tests the connection before anything else
-npm run setup                 # prisma generate + migrate + seed, in one step
-npm run dev                   # http://localhost:8080
-
-# 2. App (second terminal)
-cd client
-npm install
-npm run dev                   # http://localhost:5173 — /api is proxied to :8080
-```
-
-For a local Postgres, `DATABASE_URL` and `DIRECT_URL` can be the same plain URL without `?pgbouncer=true`.
-
-Run the business-logic tests with `npm test` in `server/`. They cover totals rounding, cash balance, liters/KG rules, charcoal stock and the Sri Lanka time-zone period boundaries.
+Both are created by the migration `20260927000100_app_users.sql`. **Change them after the first sign-in** from පරිපාලක → සැකසුම් (only the admin can change either password). Passwords are stored as bcrypt hashes; the plain values above only exist in that migration file.
 
 ## Environment variables
 
-### server/.env
-
-| Variable | Required | Purpose |
+| Where | Variable | Purpose |
 |---|---|---|
-| `DATABASE_URL` | yes | Pooled connection for the running app. Supabase: Transaction pooler (port 6543) + `?pgbouncer=true&connection_limit=5`. Neon: the `-pooler` host + the same params. |
-| `DIRECT_URL` | yes | Direct connection used only by `prisma migrate`. Supabase: port 5432. Neon: host without `-pooler`. |
-| `JWT_SECRET` | yes | 32+ random characters. `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
-| `INITIAL_ADMIN_PIN` | first deploy | 4–8 digits, the owner's PIN. Read only by the seed, only when that PIN doesn't exist. Remove it afterwards. |
-| `INITIAL_USER_PIN` | first deploy | 4–8 digits, the counter PIN. Must differ from the admin PIN. |
-| `USER_SESSION_TTL_MINUTES` | no | Default 720 (a working day). |
-| `CORS_ORIGINS` | split deploy | Comma-separated frontend origins, e.g. `https://mill-pos.vercel.app`. |
-| `ADMIN_SESSION_TTL_MINUTES` | no | Default 30. |
-| `TRUST_PROXY` | no | Default 1 (Railway/Render). Needed so rate limiting sees real client IPs. |
-| `SERVE_CLIENT_DIR` | no | Single-server mode: path to `client/dist`. |
-| `BUSINESS_UTC_OFFSET_MINUTES` | no | Default 330 (Sri Lanka). Defines "today / week / month / year". |
-| `ALLOW_NEGATIVE_CHARCOAL_STOCK` | no | Default false: charcoal sales beyond recorded stock are refused. |
-| `PORT` | no | Default 8080; Railway sets it. |
+| **Vercel** (and `client/.env` for local builds) | `VITE_API_URL` | `https://<project-ref>.supabase.co/functions/v1` — no trailing slash. The app appends `/api/...`. |
+| **Supabase function secrets** (`supabase/functions/.env`) | `JWT_SECRET` | 32+ random characters that sign the session tokens. |
+| | `CORS_ORIGINS` | Your Vercel URL(s), comma-separated. Empty allows any origin (tokens travel in a header, never in cookies). |
+| | `USER_SESSION_TTL_MINUTES` / `ADMIN_SESSION_TTL_MINUTES` | Default 720 / 30. |
+| | `BUSINESS_UTC_OFFSET_MINUTES` | Default 330 (Sri Lanka). Defines "today / week / month / year". |
+| | `ALLOW_NEGATIVE_CHARCOAL_STOCK` | Default false: charcoal sales beyond recorded stock are refused. |
+| | `SUPABASE_DB_URL` | Injected by Supabase automatically; nothing to set. |
+| **Supabase CLI** (`supabase/.env`, local only) | `SUPABASE_DB_PASSWORD` | Database password for `db push`. Never committed. |
 
-### client/.env
-
-| Variable | Purpose |
-|---|---|
-| `VITE_API_URL` | Full API URL without trailing slash, e.g. `https://mill-pos-api.up.railway.app`. Leave empty in local dev and single-server mode. |
+No Supabase anon or service-role key is needed anywhere: the app does not use Supabase Auth or `supabase-js`.
 
 ## Deployment
 
-### 1. Database — Supabase or Neon
+### 1. Backend — Supabase
 
-Create a project in the region closest to Sri Lanka (Supabase: Mumbai `ap-south-1`; Neon: Singapore). Copy both the pooled and the direct connection strings into the backend's variables as described above. Turn on daily backups (Supabase Pro / Neon point-in-time restore) — this is the business's financial record.
+```bash
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push                                            # applies supabase/migrations
+npx supabase secrets set --env-file supabase/functions/.env     # JWT_SECRET, CORS_ORIGINS, ...
+npx supabase functions deploy api
+curl https://<project-ref>.supabase.co/functions/v1/api/health
+```
 
-### 2. API — Railway
+Or from the repo root: `npm run db:push`, `npm run secrets:push`, `npm run deploy:functions`. Turn on daily backups (Supabase Pro) — this is the business's financial record.
 
-1. New Project → Deploy from GitHub → choose the repo, set **Root Directory** to `server`.
-2. Add the variables from the table above (`INITIAL_ADMIN_PIN` included for the first deploy).
-3. `server/railway.json` already sets: build `npm ci --include=dev && npm run build`, pre-deploy `npm run release` (runs migrations, then the idempotent seed), start `npm start`, health check `/api/health`.
-4. Generate a public domain under Settings → Networking.
-5. After the first successful deploy, delete `INITIAL_ADMIN_PIN` from the variables.
-
-**Render instead:** Web Service, root `server`, build `npm ci --include=dev && npm run build`, pre-deploy command `npm run release` (or start command `npm run release && npm start` on the free plan), health check path `/api/health`.
-
-### 3. App — Vercel
+### 2. Frontend — Vercel
 
 1. New Project → import the repo, set **Root Directory** to `client`. Vercel detects Vite; `client/vercel.json` adds the SPA rewrite and correct caching for the service worker.
-2. Add `VITE_API_URL` = your Railway URL.
-3. Deploy, then put the Vercel URL into the API's `CORS_ORIGINS` and redeploy the API.
+2. Environment Variables → add `VITE_API_URL` = `https://<project-ref>.supabase.co/functions/v1`.
+3. Deploy, then put the Vercel URL into the function's `CORS_ORIGINS`: `npx supabase secrets set CORS_ORIGINS=https://your-app.vercel.app`.
 4. On the counter phone/tablet, open the site and use "Add to Home Screen". It then opens full-screen and works offline.
 
-### Alternative: one Node server for both
+## Local development
 
 ```bash
-npm run build:single                           # builds client, then server
-SERVE_CLIENT_DIR=../client/dist npm run start:single
+npm --prefix client install    # once
+npm run dev                    # http://localhost:5173
 ```
 
-Build the client with `VITE_API_URL` empty so it calls the same origin, and leave `CORS_ORIGINS` empty. On Railway, set Root Directory to the repo root, build command `npm run build:single`, pre-deploy `npm --prefix server run release`, start `npm run start:single`, and variable `SERVE_CLIENT_DIR=../client/dist`.
+What the app talks to depends on `client/.env`:
 
-## Upgrading an existing install
+- **`VITE_API_URL=https://<project-ref>.supabase.co/functions/v1`** (the default in this repo) — the local app uses the **live** edge function and the **real** database. Anything recorded while testing lands in the business's books.
+- **`VITE_API_URL` empty** — Vite proxies `/api` to a local function on `http://127.0.0.1:54321/functions/v1`. Run a local stack first (needs Docker):
 
-The newest migration replaces device pairing with two PINs and splits each transaction's payment into cash / cheque / credit parts. Your existing admin PIN is carried across automatically; set the counter PIN with `INITIAL_USER_PIN` before seeding, or afterwards with `npm run set-pin -- user 1234`. Old transactions keep their single payment method as one part. Paired devices stop being a concept — everyone signs in with a PIN instead.
+  ```bash
+  cp supabase/functions/.env.example supabase/functions/.env   # set JWT_SECRET
+  npx supabase start                                           # local Postgres + runs supabase/migrations
+  npm run dev:functions                                        # serves the api function locally
+  ```
 
-Earlier, this version added credit, customers, expenses, cheque deposit dates, the "වෙනත්" sale item, charcoal corrections and temporary access. Apply the two new migrations and re-seed (the seed adds the "වෙනත්" product and is safe to re-run):
+  The local database gets the same `admin` / `user` accounts and product catalog from the migrations.
 
-```bash
-cd server
-npm install
-npx prisma generate
-npm run db:migrate
-npm run db:seed
-```
+### Root scripts
 
-Existing rows are untouched: old sales and purchases keep `CASH`/`CHEQUE` and simply have no customer or deposit date.
+| Script | What it does |
+|---|---|
+| `npm run dev` | Starts the client (Vite) |
+| `npm run dev:functions` | Serves the edge function locally with `supabase/functions/.env` |
+| `npm test` | Business-logic tests under Deno (fetched by `npx`) |
+| `npm run check:functions` | Type-checks the edge function |
+| `npm run db:push` | Applies new files in `supabase/migrations/` to the linked project |
+| `npm run secrets:push` | Uploads `supabase/functions/.env` as the function's secrets |
+| `npm run deploy:functions` | Deploys the `api` function |
 
 ## Operations
 
-**First sign-in.** The seed creates both PINs from `INITIAL_ADMIN_PIN` and `INITIAL_USER_PIN`. Open the app, type one of them, and you're in — the counter PIN shows the four working tabs, the admin PIN adds පරිපාලක.
+**Changing the schema.** Add a new file to `supabase/migrations/` (`npx supabase migration new <name>`) and run `npx supabase db push`. Never edit a migration that has already been pushed.
 
-**Use `npm run` rather than `npx prisma`.** `npx` fetches the newest Prisma from the
-internet when the project's own copy is missing, and newer majors renamed the commands
-(`migrate` became `migration`) — which produces a confusing "no command registered"
-error. The scripts below always use the version pinned in `package.json` (6.16.0, exact):
-`npm run setup`, `npm run db:migrate`, `npm run db:seed`, `npm run check`.
+**Forgot a password?** In the Supabase dashboard → SQL Editor:
 
-**Forgot a PIN?** On a machine with production `DATABASE_URL`:
-
-```bash
-cd server && npm run set-pin -- admin 482913      # or: npm run set-pin -- user 1234
+```sql
+UPDATE app_users
+SET password_hash = extensions.crypt('482913', extensions.gen_salt('bf', 12)),
+    pin_version = pin_version + 1, failed_attempts = 0, locked_until = NULL, updated_at = now()
+WHERE username = 'admin';      -- or 'user'
 ```
 
-This invalidates every existing admin session and is written to the audit log.
+This ends every session opened with the old password.
 
 **Reading the audit log:**
 
@@ -153,7 +129,7 @@ FROM audit_logs ORDER BY created_at DESC LIMIT 50;
 
 ## API
 
-All request/response bodies are JSON. Money and quantities are sent and returned as decimal strings (`"1250.00"`), never floats. Errors look like `{ "error": { "code": "…", "message": "…", "details": … } }`.
+Paths are relative to `https://<project-ref>.supabase.co/functions/v1` (locally `http://127.0.0.1:54321/functions/v1`). All request/response bodies are JSON. Money and quantities are sent and returned as decimal strings (`"1250.00"`), never floats. Errors look like `{ "error": { "code": "…", "message": "…", "details": … } }`.
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
@@ -175,17 +151,17 @@ All request/response bodies are JSON. Money and quantities are sent and returned
 | GET | `/api/cheques?from=&to=` | admin | Cheques due for deposit, in and out, with totals |
 | GET / POST | `/api/charcoal/adjustments` | admin | Correct charcoal stock: `{ clientId, countedKg, reason }` |
 | POST / GET / DELETE | `/api/auth/temporary-access` | admin | Lend the counter the admin screens for a while, see it, end it |
-| POST | `/api/auth/login` | — | `{ pin }` → `{ token, role, expiresAt }`. One box, two PINs. Rate-limited. |
-| GET | `/api/auth/session` | any | Role, expiry, and whether a lent window is open |
-| POST | `/api/auth/change-pin` | PIN admin | `{ role, currentPin, newPin }` — the admin PIN sets both |
+| POST | `/api/auth/login` | — | `{ username, password }` → `{ token, role, username, expiresAt }`. Rate-limited. |
+| GET | `/api/auth/session` | any | Role, username, expiry, and whether a lent window is open |
+| POST | `/api/auth/change-pin` | admin account | `{ role: USER\|ADMIN, currentPin, newPin }` — changes that account's password; `currentPin` is the admin's own password |
 
-Every call carries `Authorization: Bearer <token>` from the sign-in. "device" in the table means any signed-in session; "admin" means the owner's PIN or a lent window; "PIN admin" means the owner's PIN only.
+Every call carries `Authorization: Bearer <token>` from the sign-in. "session" in the table means any signed-in account; "admin" means the admin account or a lent window; "admin account" means the admin account only.
 
 ## How the important parts work
 
 **Never losing a transaction.** When the cashier taps save, the transaction is written to IndexedDB first, then sent. If the send fails for network or server reasons, it stays queued and is retried in order (on reconnect, on returning to the app, and every 15 s) with backoff. Each transaction carries a device-generated `clientId` with a unique index in Postgres, so a retry of something the server already received returns the original row instead of creating a duplicate. If the server refuses a queued item (for example, not enough charcoal), it is kept and flagged in the status sheet for someone to retry or consciously discard. The status pill in the header always shows how many items are waiting.
 
-**Two PINs, one box.** The app opens on a PIN pad and shows nothing until a PIN is entered. The counter PIN opens the working screens; the owner's PIN opens those plus the books. Which PIN was typed is decided on the server, and the session token carries the role. The counter session lasts the working day (`USER_SESSION_TTL_MINUTES`, 12 hours by default) and is kept on the device; an admin session lasts 30 minutes and is never stored, so a reload always brings the PIN pad back. There is no device pairing any more — a PIN is the only thing needed to start work.
+**Two accounts.** The app opens on a sign-in form and shows nothing until a username and password are entered. The `user` account opens the working screens; `admin` opens those plus the books. The role comes from the account on the server, and the session token names the account. The counter session lasts the working day (`USER_SESSION_TTL_MINUTES`, 12 hours by default) and is kept on the device; an admin session lasts 30 minutes and is never stored, so a reload always brings the sign-in form back.
 
 **The price book.** One screen (the මිල button in the header, open to the counter as well as the owner) holds what a litre of each oil, each bottle size and each kilo of copra or charcoal costs. The sale and purchase forms fill the price in from it, so the cashier types a quantity and nothing else. Prices stand until someone changes them — nothing expires overnight. Typing a different price on a sale is allowed, and by default that new price is kept for next time; a tick box turns it into a one-off. Every change is in the audit log with who and when.
 
@@ -201,13 +177,13 @@ The same visit can also be built from the ordinary screens, which is how it usua
 
 Underneath, both halves are recorded in full, because both really happened: the part that cancels out is cash on each side, so the drawer nets to zero for it, and only the leftover carries the chosen method. A Rs. 48,500 copra purchase against a Rs. 4,050 oil sale settled by cheque becomes a purchase of 44,450 cheque + 4,050 cash and a sale of 4,050 cash — the drawer is unchanged, one cheque goes out, and the stock figures are right. It all queues offline like everything else.
 
-**Daily customers.** The people who take oil now and pay at the end of the month live in their own tab, on the counter side rather than behind the PIN — the person at the counter is the one who gets asked "how much do I owe?". A balance is never stored, only recomputed: credit sales − settlements received − credit purchases + settlements paid. That way a deleted sale or payment can never leave a phantom debt behind. Positive means they owe the mill, negative means the mill owes them. A customer with an outstanding balance cannot be removed.
+**Daily customers.** The people who take oil now and pay at the end of the month live in their own tab, on the counter side rather than behind the admin account — the person at the counter is the one who gets asked "how much do I owe?". A balance is never stored, only recomputed: credit sales − settlements received − credit purchases + settlements paid. That way a deleted sale or payment can never leave a phantom debt behind. Positive means they owe the mill, negative means the mill owes them. A customer with an outstanding balance cannot be removed.
 
 **Expenses.** A `වියදම්` cash entry leaves the drawer and must say what it was for — at least three characters, enforced in the database as well as the form. An expense without a purpose is an unexplained hole in the till.
 
 **Charcoal corrections.** Weighing and moisture loss mean computed stock rarely lands on zero when a batch sells out. The ⟲ button on the summary screen records what is actually in the store (usually 0) with a reason. Nothing in the history is edited — a signed correction row is added, and stock becomes purchases − sales + corrections.
 
-**Temporary admin access.** From Admin → සැකසුම්, the owner can open a window of 30 minutes to 8 hours. During it, anyone signed in with the counter PIN gets a පරිපාලක tab holding the summary, the history and the cheque list — never the PINs or the power to lend access. The window is checked against the clock on every single request, so it stops the moment it expires or is ended early; nothing is cached in a token.
+**Temporary admin access.** From Admin → සැකසුම්, the owner can open a window of 30 minutes to 8 hours. During it, anyone signed in as `user` gets a පරිපාලක tab holding the summary, the history and the cheque list — never the passwords or the power to lend access. The window is checked against the clock on every single request, so it stops the moment it expires or is ended early; nothing is cached in a token.
 
 **Money maths.** Totals are computed only on the server with `decimal.js` as `round(quantity × price, 2)` half-up, stored as `DECIMAL`, and double-checked by a database `CHECK` constraint. The totals the client shows while typing are previews.
 
@@ -219,27 +195,28 @@ Underneath, both halves are recorded in full, because both really happened: the 
 
 **Periods** are computed on the server in Sri Lanka time (UTC+5:30). Weeks start on Monday.
 
-**Audit and immutability.** Every create, delete and PIN change writes an `audit_logs` row in the same transaction. Database triggers reject hard `DELETE`s on financial tables, reject any edit other than the soft-delete transition, and make the audit log append-only, so a stray SQL console session can't quietly rewrite history (a database owner could still disable the triggers deliberately).
+**Audit and immutability.** Every create, delete and password change writes an `audit_logs` row in the same transaction. Database triggers reject hard `DELETE`s on financial tables, reject any edit other than the soft-delete transition, and make the audit log append-only, so a stray SQL console session can't quietly rewrite history (a database owner could still disable the triggers deliberately).
 
 **An expired session never loses work.** A 401 while a queued transaction is being sent is treated like being offline: it stays in the outbox and goes through as soon as someone signs in again.
 
-**PINs.** Both are hashed with bcrypt (cost 12) and checked only on the server. Sign-in is limited to 5 wrong attempts per IP per 15 minutes, plus a 15-minute lock after 10 consecutive wrong PINs from anywhere. Changing a PIN bumps a version number embedded in that role's tokens, which ends every session opened with the old one. Only the admin PIN can change either PIN, so an unlocked tablet left on the counter can't be used to change the locks.
+**Passwords.** Both are hashed with bcrypt (cost 12) and checked only on the server. Sign-in is limited to 5 wrong attempts per IP per 15 minutes, plus a 15-minute lock on an account after 10 wrong passwords in a row. Changing a password bumps a version number embedded in that account's tokens, which ends every session opened with the old one. Only the admin can change either password, so an unlocked tablet left on the counter can't be used to change the locks.
 
 ## Testing
 
-`npm test` in `server/` runs the business-logic tests (17): rounding, the cash balance,
+`npm test` at the repo root runs the business-logic tests (17): rounding, the cash balance,
 split payments, litres and kilos, charcoal stock and corrections, credit and the
 Sri Lanka period boundaries.
 
 The interface is checked by driving it in a browser against a stand-in API — sign-in for
-both roles, the price book, sales with bottles and containers, split payments, purchases
+both accounts, the price book, sales with bottles and containers, split payments, purchases
 with weight deductions, expenses, one-visit trading, customers and their ledgers, personal
 loans, bills, the offline queue, an expired session, deleting with a reason, charcoal
 corrections and lent admin access.
 
 ## Known limits and next steps
 
+- `npm --prefix client run build` runs `tsc` first, and the client still has TypeScript errors from before the move to Supabase (for example, the request helper's method type does not include `PUT`/`PATCH`). Until they are fixed, the Vercel build fails; `vite build` on its own works.
 - A customer must be created while online: a credit sale needs a real customer id to point at. Sales, purchases, cash entries and settlements all still queue offline as before.
-- The counter PIN is shared by whoever works the counter, so the audit log records the browser install that recorded each row, not a named person. If a member of staff leaves, change the counter PIN — every session opened with the old one ends at once.
-- The stats, history and PIN screens need a connection; only recording transactions works offline.
+- The `user` account is shared by whoever works the counter, so the audit log records the browser install that recorded each row, not a named person. If a member of staff leaves, change its password — every session opened with the old one ends at once.
+- The stats, history and settings screens need a connection; only recording transactions works offline.
 - Transactions queued offline for more than 30 days are refused by the server and will appear as "needs attention".

@@ -13,6 +13,7 @@ export function describeError(err: unknown): string {
       return t(S.errors.PIN_LOCKED, { minutes: Math.max(1, Math.ceil(Number(details.retryAfterSec ?? 900) / 60)) });
     case 'VALIDATION_ERROR':
     case 'WRONG_PIN':
+    case 'WRONG_CREDENTIALS':
     case 'TOO_MANY_ATTEMPTS':
     case 'ADMIN_NOT_CONFIGURED':
     case 'ADMIN_SESSION_INVALID':

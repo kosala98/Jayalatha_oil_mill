@@ -4,3 +4,5 @@ dev-dist
 .env
 .env.local
 .DS_Store
+supabase/.temp
+supabase/.branches

@@ -35,7 +35,8 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Product catalog: fresh when online, cached copy when not. Works cross-origin (CORS).
-            urlPattern: ({ url }) => url.pathname === '/api/products',
+            // Same-origin in dev (/api/products), /functions/v1/api/products on Supabase.
+            urlPattern: ({ url }) => url.pathname.endsWith('/api/products'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-products',
@@ -50,7 +51,8 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    // Local dev without CORS: /api → the Express server
-    proxy: { '/api': 'http://localhost:8080' },
+    // Local dev without CORS: /api → the edge function under `supabase functions serve`.
+    // /api/sales is forwarded to <target>/api/sales, which is how Supabase names it.
+    proxy: { '/api': 'http://127.0.0.1:54321/functions/v1' },
   },
 });

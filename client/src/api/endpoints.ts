@@ -99,11 +99,11 @@ export const api = {
   temporaryAccess: (token: string) =>
     request<{ expiresAt: string | null }>('/api/auth/temporary-access', { token }),
 
-  /** One PIN box for both roles; the server decides which one was typed. */
-  login: (pin: string) =>
-    request<{ token: string; role: 'USER' | 'ADMIN'; expiresAt: string; temporaryAdminUntil: string | null }>(
+  /** Username and password; the account's role decides which screens open. */
+  login: (username: string, password: string) =>
+    request<{ token: string; role: 'USER' | 'ADMIN'; username: string; expiresAt: string; temporaryAdminUntil: string | null }>(
       '/api/auth/login',
-      { method: 'POST', body: { pin } },
+      { method: 'POST', body: { username, password } },
     ),
 
   session: (token: string) =>

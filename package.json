@@ -1,13 +1,17 @@
 {
   "name": "coconut-pos",
   "private": true,
-  "description": "Coconut oil mill POS — helper scripts. The client and server are independent npm projects.",
+  "description": "Coconut oil mill POS — helper scripts. The client (Vercel) and the Supabase backend are independent.",
   "scripts": {
-    "install:all": "npm --prefix server ci && npm --prefix client ci",
-    "dev:server": "npm --prefix server run dev",
+    "dev": "npm --prefix client run dev",
+    "install:client": "npm --prefix client ci",
+    "dev:functions": "npx supabase functions serve api --env-file supabase/functions/.env",
     "dev:client": "npm --prefix client run dev",
-    "test": "npm --prefix server test",
-    "build:single": "npm --prefix client ci && npm --prefix client run build && npm --prefix server ci --include=dev && npm --prefix server run build",
-    "start:single": "npm --prefix server start"
+    "test": "npm run test:functions",
+    "test:functions": "npx -y deno@2 test --config supabase/functions/api/deno.json supabase/functions/api",
+    "check:functions": "npx -y deno@2 check --config supabase/functions/api/deno.json supabase/functions/api/index.ts",
+    "db:push": "npx supabase db push",
+    "secrets:push": "npx supabase secrets set --env-file supabase/functions/.env",
+    "deploy:functions": "npx supabase functions deploy api"
   }
 }
