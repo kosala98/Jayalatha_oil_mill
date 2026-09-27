@@ -40,7 +40,7 @@ export function CashScreen() {
   }
 
   return (
-    <form className="stack" onSubmit={onSubmit} noValidate>
+    <form className="stack form--narrow" onSubmit={onSubmit} noValidate>
       <section className="card">
         <Segmented label={S.cash.type} options={TYPES} value={type} onChange={setType} />
         <NumberField

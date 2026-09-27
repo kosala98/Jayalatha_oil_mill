@@ -1619,3 +1619,139 @@ button {
   color: var(--oil);
   font-weight: 600;
 }
+
+/* ==========================================================================
+   Wider screens — the counter PC and tablets in landscape.
+   The phone layout above is untouched; these only add room as it appears.
+   ========================================================================== */
+
+/* Mouse and trackpad: show what is clickable. Touch screens never see hover. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover {
+    filter: brightness(1.06);
+  }
+  .btn--quiet:not(:disabled):hover,
+  .btn--danger-quiet:not(:disabled):hover {
+    background: var(--track);
+    filter: none;
+  }
+  .product-chip:not([aria-checked='true']):hover,
+  .segmented__option:not([aria-checked='true']):hover {
+    border-color: var(--palm);
+    background: var(--palm-tint);
+  }
+  .tabs__tab:not([aria-selected='true']):hover {
+    color: var(--ink);
+  }
+  .customer-row:hover {
+    background: var(--field);
+  }
+}
+
+@media (min-width: 900px) {
+  .app {
+    max-width: 1180px;
+    padding-inline: 28px;
+  }
+
+  /* Every tab fits side by side now: spread them instead of scrolling. */
+  .tabs {
+    margin: 0 -28px;
+    padding: 0 20px;
+    grid-auto-columns: minmax(max-content, 1fr);
+  }
+  .tabs__tab {
+    min-height: 54px;
+    font-size: var(--t-md);
+  }
+
+  .card {
+    padding: 22px 24px;
+  }
+  .card--center {
+    max-width: 440px;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  /* Sale, purchase and visit: what is being sold on the left; the total, how it is
+     paid and the save button on the right, always in view while the left scrolls. */
+  .entry {
+    grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+    align-items: start;
+    column-gap: 24px;
+  }
+  .entry > .basket-strip,
+  .entry > .btn--quiet {
+    grid-column: 1 / -1;
+  }
+  .entry__main {
+    grid-column: 1;
+  }
+  .entry__side {
+    grid-column: 2;
+    position: sticky;
+    top: 68px; /* below the sticky tabs */
+    max-height: calc(100dvh - 84px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 4px;
+  }
+
+  .form--narrow {
+    max-width: 640px;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+  }
+  .product-chip {
+    min-height: 60px;
+  }
+
+  /* Weight deductions: a row of small fields instead of a tall column. */
+  details.drawer .split {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  /* Summary figures, the customer list and the price book use the width. */
+  .figures {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  }
+  .customer-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    column-gap: 28px;
+  }
+  .customer-list li:last-child .customer-row {
+    border-block-end: 1px solid var(--rule-soft);
+  }
+
+  .readout__value {
+    font-size: 2.75rem;
+  }
+  .readout--xl .readout__value {
+    font-size: 3.25rem;
+  }
+
+  .toast-region {
+    justify-content: flex-end;
+    padding-inline: 28px;
+  }
+  .toast {
+    max-width: 420px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app {
+    max-width: 1320px;
+  }
+  .entry {
+    grid-template-columns: minmax(0, 1.5fr) minmax(400px, 1fr);
+    column-gap: 32px;
+  }
+}

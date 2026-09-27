@@ -234,162 +234,166 @@ export function SaleScreen() {
   }
 
   return (
-    <form className="stack" onSubmit={onSubmit} noValidate>
+    <form className="stack entry" onSubmit={onSubmit} noValidate>
       <BasketStrip />
-      <section className="card">
-        <div className="field">
-          <span className="field__label" id="product-label">
-            {S.sale.product}
-          </span>
-          <div role="radiogroup" aria-labelledby="product-label" className="product-grid">
-            {products.map((p) => (
-              <button
-                key={p.code}
-                type="button"
-                role="radio"
-                aria-checked={p.code === product?.code}
-                className={`product-chip ${p.isCharcoal ? 'product-chip--charcoal' : ''}`}
-                onClick={() => setProductCode(p.code)}
-              >
-                {p.nameSi}
-              </button>
-            ))}
+      <div className="entry__main stack">
+        <section className="card">
+          <div className="field">
+            <span className="field__label" id="product-label">
+              {S.sale.product}
+            </span>
+            <div role="radiogroup" aria-labelledby="product-label" className="product-grid">
+              {products.map((p) => (
+                <button
+                  key={p.code}
+                  type="button"
+                  role="radio"
+                  aria-checked={p.code === product?.code}
+                  className={`product-chip ${p.isCharcoal ? 'product-chip--charcoal' : ''}`}
+                  onClick={() => setProductCode(p.code)}
+                >
+                  {p.nameSi}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {isOther && (
-          <Field
-            label={S.sale.otherName}
-            value={customName}
-            onChange={setCustomName}
-            error={errors.customName}
-            placeholder={S.sale.otherNamePlaceholder}
-            maxLength={80}
+          {isOther && (
+            <Field
+              label={S.sale.otherName}
+              value={customName}
+              onChange={setCustomName}
+              error={errors.customName}
+              placeholder={S.sale.otherNamePlaceholder}
+              maxLength={80}
+            />
+          )}
+
+          {product && product.allowedUnits.length > 1 && (
+            <Segmented
+              label={S.sale.unit}
+              options={product.allowedUnits.map((u) => ({ value: u, label: S.labels.units[u] }))}
+              value={unitType}
+              onChange={setUnitType}
+            />
+          )}
+
+          {isBottle && (
+            <Segmented
+              label={S.sale.bottleSize}
+              options={BOTTLE_SIZES.map((b) => ({ value: b, label: S.labels.bottleSizes[b] }))}
+              value={bottleSize}
+              onChange={setBottleSize}
+            />
+          )}
+
+          <div className="field-row">
+            <NumberField
+              label={isBottle ? S.sale.quantityBottles : S.sale.quantity}
+              value={quantity}
+              onChange={setQuantity}
+              error={errors.quantity}
+              integer={isBottle}
+              suffix={isBottle ? undefined : S.labels.units[unitType]}
+            />
+            <NumberField label={PRICE_LABEL[unitType]} value={price} onChange={setPrice} error={errors.price} />
+          </div>
+        </section>
+
+        <details className="drawer" open={containerCount !== ''}>
+          <summary className="drawer__summary">{S.sale.containers}</summary>
+          <p className="muted small">{S.sale.containersHelp}</p>
+          <div className="field-row">
+            <NumberField
+              integer
+              label={isCan ? S.sale.containerCountCan : S.sale.containerCountBottle}
+              value={containerCount}
+              onChange={setContainerCount}
+            />
+            <NumberField
+              label={isCan ? S.sale.containerPriceCan : S.sale.containerPriceBottle}
+              value={containerPrice}
+              onChange={setContainerPrice}
+              error={errors.containerPrice}
+              prefix={S.common.rs}
+            />
+          </div>
+          {Number(containersTotal || 0) > 0 && (
+            <p className="muted small">
+              {S.sale.containerTotal}: {S.common.rs} {containersTotal}
+            </p>
+          )}
+        </details>
+      </div>
+
+      <div className="entry__side stack">
+        {/* Mid-visit the big figure is what is still owed either way, with the line
+            being typed kept in view above it — including before it is added. */}
+        {visitLines.length > 0 ? (
+          <Readout
+            label={visitNet === 0 ? S.combined.balanced : visitNet > 0 ? S.combined.customerPays : S.combined.weOwe}
+            amount={Math.abs(visitNet).toFixed(2)}
+            sub={{ label: S.common.total, amount: total || null }}
+            breakdown={breakdown}
+            note={S.basket.includesThisLine}
+          />
+        ) : (
+          <Readout
+            label={S.common.total}
+            amount={total}
+            breakdown={payment.mode === 'SPLIT' ? breakdown : undefined}
           />
         )}
 
-        {product && product.allowedUnits.length > 1 && (
-          <Segmented
-            label={S.sale.unit}
-            options={product.allowedUnits.map((u) => ({ value: u, label: S.labels.units[u] }))}
-            value={unitType}
-            onChange={setUnitType}
-          />
-        )}
+        <section className="card">
+          {unitType === 'KG' && (
+            <label className="price-note">
+              <input type="checkbox" checked={showConversion} onChange={(e) => setShowConversion(e.target.checked)} />
+              {S.bill.conversionOnBill}
+            </label>
+          )}
 
-        {isBottle && (
-          <Segmented
-            label={S.sale.bottleSize}
-            options={BOTTLE_SIZES.map((b) => ({ value: b, label: S.labels.bottleSizes[b] }))}
-            value={bottleSize}
-            onChange={setBottleSize}
-          />
-        )}
+          {price !== '' && price !== bookPrice && (
+            <label className="price-note">
+              <input type="checkbox" checked={keepPrice} onChange={(e) => setKeepPrice(e.target.checked)} />
+              {S.prices.keepPrice}
+            </label>
+          )}
 
-        <div className="field-row">
-          <NumberField
-            label={isBottle ? S.sale.quantityBottles : S.sale.quantity}
-            value={quantity}
-            onChange={setQuantity}
-            error={errors.quantity}
-            integer={isBottle}
-            suffix={isBottle ? undefined : S.labels.units[unitType]}
+          <PaymentFields
+            total={total ?? ''}
+            value={payment}
+            onChange={(next) => {
+              setPayment(next);
+              setPaymentErrors(null); // changing the method clears a complaint about the old one
+            }}
+            errors={paymentErrors}
+            customers={customers}
+            onCustomerCreated={addLocal}
           />
-          <NumberField label={PRICE_LABEL[unitType]} value={price} onChange={setPrice} error={errors.price} />
-        </div>
-      </section>
+        </section>
 
-      <details className="drawer" open={containerCount !== ''}>
-        <summary className="drawer__summary">{S.sale.containers}</summary>
-        <p className="muted small">{S.sale.containersHelp}</p>
-        <div className="field-row">
-          <NumberField
-            integer
-            label={isCan ? S.sale.containerCountCan : S.sale.containerCountBottle}
-            value={containerCount}
-            onChange={setContainerCount}
-          />
-          <NumberField
-            label={isCan ? S.sale.containerPriceCan : S.sale.containerPriceBottle}
-            value={containerPrice}
-            onChange={setContainerPrice}
-            error={errors.containerPrice}
-            prefix={S.common.rs}
-          />
-        </div>
-        {Number(containersTotal || 0) > 0 && (
-          <p className="muted small">
-            {S.sale.containerTotal}: {S.common.rs} {containersTotal}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
           </p>
         )}
-      </details>
-
-      {/* Mid-visit the big figure is what is still owed either way, with the line
-          being typed kept in view above it — including before it is added. */}
-      {visitLines.length > 0 ? (
-        <Readout
-          label={visitNet === 0 ? S.combined.balanced : visitNet > 0 ? S.combined.customerPays : S.combined.weOwe}
-          amount={Math.abs(visitNet).toFixed(2)}
-          sub={{ label: S.common.total, amount: total || null }}
-          breakdown={breakdown}
-          note={S.basket.includesThisLine}
-        />
-      ) : (
-        <Readout
-          label={S.common.total}
-          amount={total}
-          breakdown={payment.mode === 'SPLIT' ? breakdown : undefined}
-        />
-      )}
-
-      <section className="card">
-        {unitType === 'KG' && (
-          <label className="price-note">
-            <input type="checkbox" checked={showConversion} onChange={(e) => setShowConversion(e.target.checked)} />
-            {S.bill.conversionOnBill}
-          </label>
-        )}
-
-        {price !== '' && price !== bookPrice && (
-          <label className="price-note">
-            <input type="checkbox" checked={keepPrice} onChange={(e) => setKeepPrice(e.target.checked)} />
-            {S.prices.keepPrice}
-          </label>
-        )}
-
-        <PaymentFields
-          total={total ?? ''}
-          value={payment}
-          onChange={(next) => {
-            setPayment(next);
-            setPaymentErrors(null); // changing the method clears a complaint about the old one
-          }}
-          errors={paymentErrors}
-          customers={customers}
-          onCustomerCreated={addLocal}
-        />
-      </section>
-
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {visitLines.length > 0 ? (
-        // Mid-visit everything typed belongs to the visit; it is settled once, at the end.
-        <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => addToVisit(false)}>
-          {S.basket.addToVisit}
-        </button>
-      ) : (
-        <>
-          <button type="button" className="btn btn--secondary btn--block" onClick={() => addToVisit(true)}>
-            {S.basket.addPurchase}
+        {visitLines.length > 0 ? (
+          // Mid-visit everything typed belongs to the visit; it is settled once, at the end.
+          <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => addToVisit(false)}>
+            {S.basket.addToVisit}
           </button>
-          <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
-            {busy ? S.common.saving : S.sale.submit}
-          </button>
-        </>
-      )}
+        ) : (
+          <>
+            <button type="button" className="btn btn--secondary btn--block" onClick={() => addToVisit(true)}>
+              {S.basket.addPurchase}
+            </button>
+            <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
+              {busy ? S.common.saving : S.sale.submit}
+            </button>
+          </>
+        )}
+      </div>
     </form>
   );
 }

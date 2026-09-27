@@ -196,106 +196,110 @@ export function PurchaseScreen() {
   }
 
   return (
-    <form className="stack" onSubmit={onSubmit} noValidate>
+    <form className="stack entry" onSubmit={onSubmit} noValidate>
       <BasketStrip />
-      <section className="card">
-        <Segmented label={S.purchase.item} options={MATERIALS} value={material} onChange={setMaterial} />
-        {material === 'OTHER' && (
-          <Field
-            label={S.purchase.customName}
-            placeholder={S.purchase.customNamePlaceholder}
-            value={customName}
-            onChange={setCustomName}
-            error={errors.customName}
-            maxLength={80}
+      <div className="entry__main stack">
+        <section className="card">
+          <Segmented label={S.purchase.item} options={MATERIALS} value={material} onChange={setMaterial} />
+          {material === 'OTHER' && (
+            <Field
+              label={S.purchase.customName}
+              placeholder={S.purchase.customNamePlaceholder}
+              value={customName}
+              onChange={setCustomName}
+              error={errors.customName}
+              maxLength={80}
+            />
+          )}
+          <div className="field-row">
+            <NumberField label={S.purchase.quantityKg} value={quantity} onChange={setQuantity} error={errors.quantity} suffix="KG" />
+            <NumberField label={S.purchase.pricePerKg} value={price} onChange={setPrice} error={errors.price} />
+          </div>
+        </section>
+
+        <details className="drawer" open={usingDeductions}>
+          <summary className="drawer__summary">{S.deductions.title}</summary>
+          <p className="muted small">{S.deductions.help}</p>
+          <div className="split">
+            {(['MOISTURE', 'SACK', 'SPOILED', 'DUST', 'OTHER'] as DeductionKind[]).map((kind) => (
+              <NumberField
+                key={kind}
+                label={S.deductions.kinds[kind]}
+                value={deductions[kind]}
+                onChange={(v) => setDeductions((d) => ({ ...d, [kind]: v }))}
+                suffix="KG"
+              />
+            ))}
+          </div>
+          {usingDeductions && (
+            <p className={`split__remainder ${netKg > 0 ? 'is-balanced' : ''}`}>
+              {S.deductions.totalDeducted}: {deductedKg} KG · {S.deductions.net}: {netKg > 0 ? netKg : 0} KG
+            </p>
+          )}
+        </details>
+      </div>
+
+      <div className="entry__side stack">
+        {/* Mid-visit the big figure is what is still owed either way, with the line
+            being typed kept in view above it — including before it is added. */}
+        {visitLines.length > 0 ? (
+          <Readout
+            label={visitNet === 0 ? S.combined.balanced : visitNet > 0 ? S.combined.customerPays : S.combined.weOwe}
+            amount={Math.abs(visitNet).toFixed(2)}
+            sub={{ label: S.common.total, amount: total || null }}
+            breakdown={breakdown}
+            note={S.basket.includesThisLine}
+          />
+        ) : (
+          <Readout
+            label={S.common.total}
+            amount={total}
+            breakdown={payment.mode === 'SPLIT' ? breakdown : undefined}
           />
         )}
-        <div className="field-row">
-          <NumberField label={S.purchase.quantityKg} value={quantity} onChange={setQuantity} error={errors.quantity} suffix="KG" />
-          <NumberField label={S.purchase.pricePerKg} value={price} onChange={setPrice} error={errors.price} />
-        </div>
-      </section>
 
-      <details className="drawer" open={usingDeductions}>
-        <summary className="drawer__summary">{S.deductions.title}</summary>
-        <p className="muted small">{S.deductions.help}</p>
-        <div className="split">
-          {(['MOISTURE', 'SACK', 'SPOILED', 'DUST', 'OTHER'] as DeductionKind[]).map((kind) => (
-            <NumberField
-              key={kind}
-              label={S.deductions.kinds[kind]}
-              value={deductions[kind]}
-              onChange={(v) => setDeductions((d) => ({ ...d, [kind]: v }))}
-              suffix="KG"
-            />
-          ))}
-        </div>
-        {usingDeductions && (
-          <p className={`split__remainder ${netKg > 0 ? 'is-balanced' : ''}`}>
-            {S.deductions.totalDeducted}: {deductedKg} KG · {S.deductions.net}: {netKg > 0 ? netKg : 0} KG
+        <section className="card">
+          {price !== '' && price !== bookPrice && (
+            <label className="price-note">
+              <input type="checkbox" checked={keepPrice} onChange={(e) => setKeepPrice(e.target.checked)} />
+              {S.prices.keepPrice}
+            </label>
+          )}
+
+          <PaymentFields
+            total={total ?? ''}
+            value={payment}
+            onChange={(next) => {
+              setPayment(next);
+              setPaymentErrors(null); // changing the method clears a complaint about the old one
+            }}
+            errors={paymentErrors}
+            customers={customers}
+            onCustomerCreated={addLocal}
+          />
+        </section>
+
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
           </p>
         )}
-      </details>
-
-      {/* Mid-visit the big figure is what is still owed either way, with the line
-          being typed kept in view above it — including before it is added. */}
-      {visitLines.length > 0 ? (
-        <Readout
-          label={visitNet === 0 ? S.combined.balanced : visitNet > 0 ? S.combined.customerPays : S.combined.weOwe}
-          amount={Math.abs(visitNet).toFixed(2)}
-          sub={{ label: S.common.total, amount: total || null }}
-          breakdown={breakdown}
-          note={S.basket.includesThisLine}
-        />
-      ) : (
-        <Readout
-          label={S.common.total}
-          amount={total}
-          breakdown={payment.mode === 'SPLIT' ? breakdown : undefined}
-        />
-      )}
-
-      <section className="card">
-        {price !== '' && price !== bookPrice && (
-          <label className="price-note">
-            <input type="checkbox" checked={keepPrice} onChange={(e) => setKeepPrice(e.target.checked)} />
-            {S.prices.keepPrice}
-          </label>
+        {visitLines.length > 0 ? (
+          // Mid-visit everything typed belongs to the visit; it is settled once, at the end.
+          <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => addToVisit(false)}>
+            {S.basket.addToVisit}
+          </button>
+        ) : (
+          <>
+            <button type="button" className="btn btn--secondary btn--block" onClick={() => addToVisit(true)}>
+              {S.basket.addSale}
+            </button>
+            <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
+              {busy ? S.common.saving : S.purchase.submit}
+            </button>
+          </>
         )}
-
-        <PaymentFields
-          total={total ?? ''}
-          value={payment}
-          onChange={(next) => {
-            setPayment(next);
-            setPaymentErrors(null); // changing the method clears a complaint about the old one
-          }}
-          errors={paymentErrors}
-          customers={customers}
-          onCustomerCreated={addLocal}
-        />
-      </section>
-
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      {visitLines.length > 0 ? (
-        // Mid-visit everything typed belongs to the visit; it is settled once, at the end.
-        <button type="button" className="btn btn--primary btn--block btn--lg" onClick={() => addToVisit(false)}>
-          {S.basket.addToVisit}
-        </button>
-      ) : (
-        <>
-          <button type="button" className="btn btn--secondary btn--block" onClick={() => addToVisit(true)}>
-            {S.basket.addSale}
-          </button>
-          <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
-            {busy ? S.common.saving : S.purchase.submit}
-          </button>
-        </>
-      )}
+      </div>
     </form>
   );
 }

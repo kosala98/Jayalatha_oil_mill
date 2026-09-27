@@ -119,84 +119,88 @@ export function CombinedScreen({ onBack, onSaved }: { onBack?(): void; onSaved?(
   }
 
   return (
-    <form className="stack" onSubmit={saveAll} noValidate>
+    <form className="stack entry" onSubmit={saveAll} noValidate>
       {onBack && (
         <button type="button" className="btn btn--quiet btn--sm" onClick={onBack}>
           {S.customers.back}
         </button>
       )}
 
-      <section className="card">
-        <h3 className="card__title">{S.combined.title}</h3>
-        <p className="muted small">{S.combined.reviewHelp}</p>
-        {customer && <p className="muted small">{t(S.combined.forCustomer, { name: customer.name })}</p>}
-      </section>
+      <div className="entry__main stack">
+        <section className="card">
+          <h3 className="card__title">{S.combined.title}</h3>
+          <p className="muted small">{S.combined.reviewHelp}</p>
+          {customer && <p className="muted small">{t(S.combined.forCustomer, { name: customer.name })}</p>}
+        </section>
 
-      {lines.length === 0 && <p className="card empty">{S.combined.empty}</p>}
+        {lines.length === 0 && <p className="card empty">{S.combined.empty}</p>}
 
-      {lines.length > 0 && (
-        <ul className="card history history--plain">
-          {lines.map((line) => (
-            <li key={line.id} className="history__row">
-              <div className="history__main">
-                <span className="history__title">
-                  {line.kind === 'sale' ? S.combined.saleTag : S.combined.purchaseTag} · {line.label}
-                </span>
-                <span className="history__meta">
-                  {line.kind === 'sale'
-                    ? `${line.quantity} ${S.labels.units[line.unitType]} × ${formatMoney(line.price)}`
-                    : `${line.quantityKg} KG × ${formatMoney(line.price)}`}
-                </span>
-                {/* How this line was paid, exactly as it was typed. */}
-                <span className="history__meta history__split">{describePayment(line, formatMoney)}</span>
-              </div>
-              <div className="history__side history__side--stack">
-                <span className="history__amount">{formatMoney(line.total)}</span>
-                <button type="button" className="btn btn--danger-quiet btn--sm" onClick={() => removeLine(line.id)}>
-                  {S.combined.removeLine}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        {lines.length > 0 && (
+          <ul className="card history history--plain">
+            {lines.map((line) => (
+              <li key={line.id} className="history__row">
+                <div className="history__main">
+                  <span className="history__title">
+                    {line.kind === 'sale' ? S.combined.saleTag : S.combined.purchaseTag} · {line.label}
+                  </span>
+                  <span className="history__meta">
+                    {line.kind === 'sale'
+                      ? `${line.quantity} ${S.labels.units[line.unitType]} × ${formatMoney(line.price)}`
+                      : `${line.quantityKg} KG × ${formatMoney(line.price)}`}
+                  </span>
+                  {/* How this line was paid, exactly as it was typed. */}
+                  <span className="history__meta history__split">{describePayment(line, formatMoney)}</span>
+                </div>
+                <div className="history__side history__side--stack">
+                  <span className="history__amount">{formatMoney(line.total)}</span>
+                  <button type="button" className="btn btn--danger-quiet btn--sm" onClick={() => removeLine(line.id)}>
+                    {S.combined.removeLine}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-      {lines.length > 0 && (
-        <>
-          <section className="card summary">
-            <h4 className="summary__title">{S.combined.totals}</h4>
-            <Row label={S.combined.salesTotal} value={salesTotal.toFixed(2)} />
-            <Row label={S.combined.purchasesTotal} value={purchasesTotal.toFixed(2)} />
+      <div className="entry__side stack">
+        {lines.length > 0 && (
+          <>
+            <section className="card summary">
+              <h4 className="summary__title">{S.combined.totals}</h4>
+              <Row label={S.combined.salesTotal} value={salesTotal.toFixed(2)} />
+              <Row label={S.combined.purchasesTotal} value={purchasesTotal.toFixed(2)} />
 
-            <h4 className="summary__title">{S.combined.paymentSummary}</h4>
-            <Row label={paid.cash >= 0 ? S.combined.cashIn : S.combined.cashOut} value={Math.abs(paid.cash).toFixed(2)} strong />
-            {paid.cheque !== 0 && (
-              <Row label={paid.cheque >= 0 ? S.combined.chequeIn : S.combined.chequeOut} value={Math.abs(paid.cheque).toFixed(2)} />
-            )}
-            {paid.credit !== 0 && (
-              <Row label={paid.credit >= 0 ? S.combined.creditUp : S.combined.creditDown} value={Math.abs(paid.credit).toFixed(2)} />
-            )}
-          </section>
+              <h4 className="summary__title">{S.combined.paymentSummary}</h4>
+              <Row label={paid.cash >= 0 ? S.combined.cashIn : S.combined.cashOut} value={Math.abs(paid.cash).toFixed(2)} strong />
+              {paid.cheque !== 0 && (
+                <Row label={paid.cheque >= 0 ? S.combined.chequeIn : S.combined.chequeOut} value={Math.abs(paid.cheque).toFixed(2)} />
+              )}
+              {paid.credit !== 0 && (
+                <Row label={paid.credit >= 0 ? S.combined.creditUp : S.combined.creditDown} value={Math.abs(paid.credit).toFixed(2)} />
+              )}
+            </section>
 
-          {error && <p className="card form-error">{error}</p>}
-          <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
-            {busy ? S.common.saving : S.combined.submit}
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger-quiet btn--block btn--sm"
-            disabled={busy}
-            onClick={() => {
-              if (window.confirm(S.basket.discardConfirm)) {
-                clearBasket();
-                onBack?.();
-              }
-            }}
-          >
-            {S.basket.discard}
-          </button>
-        </>
-      )}
+            {error && <p className="card form-error">{error}</p>}
+            <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
+              {busy ? S.common.saving : S.combined.submit}
+            </button>
+            <button
+              type="button"
+              className="btn btn--danger-quiet btn--block btn--sm"
+              disabled={busy}
+              onClick={() => {
+                if (window.confirm(S.basket.discardConfirm)) {
+                  clearBasket();
+                  onBack?.();
+                }
+              }}
+            >
+              {S.basket.discard}
+            </button>
+          </>
+        )}
+      </div>
     </form>
   );
 }

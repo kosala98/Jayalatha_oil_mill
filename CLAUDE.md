@@ -49,6 +49,11 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 - The function is deployed with `verify_jwt = false` (`supabase/config.toml`). The only Supabase key in the client is the publishable key, used for Realtime. Never use the secret or service-role key in the client.
 - Wrong passwords are limited per IP in the `rate_limit_hits` table (edge instances share no memory), and an account locks after 10 failures in a row.
 
+## Layout
+
+- Mobile-first CSS in `client/src/styles.css`. The phone layout must not change. Wide-screen rules live only in the "Wider screens" section at the end of the file (`min-width: 900px` and `1280px`, plus `(hover: hover)` for mouse hover).
+- Sale, purchase and visit forms are `form.stack.entry` with two children: `.entry__main` (the inputs) and `.entry__side` (readout, payment, errors, save buttons). On wide screens they become two columns, and the side panel is sticky. New entry-style screens should follow the same structure. Single-purpose forms use `.form--narrow`.
+
 ## Live updates
 
 - `supabase/migrations/20260927000300_realtime_change_signals.sql`: `public.pos_signal_change()` is an AFTER … FOR EACH STATEMENT trigger that calls `realtime.send({table, op}, 'change', 'pos-changes', false)`. It sends no row data, because the channel is public. It swallows its own errors, so a Realtime failure never blocks a write.
