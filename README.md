@@ -39,6 +39,7 @@ Both are created by the migration `20260927000100_app_users.sql`. **Change them 
 | Where | Variable | Purpose |
 |---|---|---|
 | **Vercel** (and `client/.env` for local builds) | `VITE_API_URL` | `https://<project-ref>.supabase.co/functions/v1` — no trailing slash. The app appends `/api/...`. |
+| | `VITE_SUPABASE_PUBLISHABLE_KEY` | The project's publishable key (`sb_publishable_…`, Dashboard → Project Settings → API Keys). Only opens the live-update channel; without it the app works but is not live. |
 | **Supabase function secrets** (`supabase/functions/.env`) | `JWT_SECRET` | 32+ random characters that sign the session tokens. |
 | | `CORS_ORIGINS` | Your Vercel URL(s), comma-separated. Empty allows any origin (tokens travel in a header, never in cookies). |
 | | `USER_SESSION_TTL_MINUTES` / `ADMIN_SESSION_TTL_MINUTES` | Default 720 / 30. |
@@ -47,7 +48,7 @@ Both are created by the migration `20260927000100_app_users.sql`. **Change them 
 | | `SUPABASE_DB_URL` | Injected by Supabase automatically; nothing to set. |
 | **Supabase CLI** (`supabase/.env`, local only) | `SUPABASE_DB_PASSWORD` | Database password for `db push`. Never committed. |
 
-No Supabase anon or service-role key is needed anywhere: the app does not use Supabase Auth or `supabase-js`.
+The only Supabase key the app uses is the **publishable** key, and only for live updates. It is meant to be public: every table has row level security with no read policy, so the key cannot read or change the books. The service-role / secret key is never used.
 
 ## Deployment
 
@@ -67,7 +68,7 @@ Or from the repo root: `npm run db:push`, `npm run secrets:push`, `npm run deplo
 ### 2. Frontend — Vercel
 
 1. New Project → import the repo. Either set **Root Directory** to `client`, or leave it at the repo root — the root `vercel.json` then builds `client/` and serves `client/dist`. Vercel detects Vite; `client/vercel.json` adds the SPA rewrite and correct caching for the service worker.
-2. Environment Variables → add `VITE_API_URL` = `https://<project-ref>.supabase.co/functions/v1`.
+2. Environment Variables → add `VITE_API_URL` = `https://<project-ref>.supabase.co/functions/v1` and `VITE_SUPABASE_PUBLISHABLE_KEY` = the publishable key. Redeploy after changing either — they are built into the app.
 3. Deploy, then put the Vercel URL into the function's `CORS_ORIGINS`: `npx supabase secrets set CORS_ORIGINS=https://your-app.vercel.app`.
 4. On the counter phone/tablet, open the site and use "Add to Home Screen". It then opens full-screen and works offline.
 
@@ -158,6 +159,8 @@ Paths are relative to `https://<project-ref>.supabase.co/functions/v1` (locally 
 Every call carries `Authorization: Bearer <token>` from the sign-in. "session" in the table means any signed-in account; "admin" means the admin account or a lent window; "admin account" means the admin account only.
 
 ## How the important parts work
+
+**Live updates.** Every screen stays current without a reload. A statement-level trigger on each table the screens show (`sales`, `purchases`, `cash_entries`, `customers`, `customer_payments`, `charcoal_adjustments`, `prices`, `products`, `temporary_admin_access`) sends a one-line signal such as `{"table":"sales","op":"INSERT"}` on the public Realtime channel `pos-changes`. Screens showing that table fetch again through the API with their own session: the price book and product list on the sale and purchase screens, the customer picker and balances, a customer's ledger, the summary, history and cheques, and a lent admin window (which now reaches the counter at once instead of at the next sign-in). Signals that arrive together are handled as one refresh; after the connection drops, or when the tablet wakes, everything is fetched again to catch up. The signal carries no figures, so the public channel leaks nothing, and a failure to send it never blocks a write.
 
 **Never losing a transaction.** When the cashier taps save, the transaction is written to IndexedDB first, then sent. If the send fails for network or server reasons, it stays queued and is retried in order (on reconnect, on returning to the app, and every 15 s) with backoff. Each transaction carries a device-generated `clientId` with a unique index in Postgres, so a retry of something the server already received returns the original row instead of creating a duplicate. If the server refuses a queued item (for example, not enough charcoal), it is kept and flagged in the status sheet for someone to retry or consciously discard. The status pill in the header always shows how many items are waiting.
 

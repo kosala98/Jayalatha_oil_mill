@@ -16,6 +16,7 @@ import { checkPositive, formatMoney, formatQty, formatStamp } from '../lib/numbe
 import { useCustomers } from '../lib/useCustomers';
 import { FALLBACK_PRODUCTS } from '../domain/catalog';
 import { useSubmit } from '../lib/useSubmit';
+import { useLiveRefresh } from '../lib/live';
 
 /**
  * Daily customers: the people who take oil now and pay at the end of the month.
@@ -201,6 +202,7 @@ function CustomerProfileView({ id, onBack }: { id: string; onBack(): void }) {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+  useLiveRefresh(['customers', 'sales', 'purchases', 'customer_payments'], () => void load());
 
   async function remove(reason: string) {
     if (!session) return;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/endpoints';
 import type { Customer } from '../domain/types';
+import { onLiveChange } from './live';
 
 const CACHE_KEY = 'pos.customers';
 
@@ -45,6 +46,11 @@ export async function refreshCustomers(): Promise<void> {
     listeners.forEach((l) => l());
   }
 }
+
+// New customers, and every transaction that moves a balance, refresh the shared list.
+onLiveChange(['customers', 'sales', 'purchases', 'customer_payments'], () => {
+  void refreshCustomers();
+});
 
 /** Puts a newly created customer in front of every screen at once. */
 export function addCustomerLocally(customer: Customer): void {

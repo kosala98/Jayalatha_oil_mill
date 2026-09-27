@@ -7,6 +7,7 @@ import { todayIso } from '../../domain/payment';
 import type { ChequeDay, ChequeItem } from '../../domain/types';
 import { S, t } from '../../i18n';
 import { formatMoney } from '../../lib/numbers';
+import { useLiveRefresh } from '../../lib/live';
 
 /**
  * "Which cheques go to the bank today?" — the question this screen exists for.
@@ -37,6 +38,7 @@ export function ChequesView() {
   useEffect(() => {
     void load();
   }, [load]);
+  useLiveRefresh(['sales', 'purchases', 'customer_payments', 'customers'], () => void load());
 
   const incoming = data?.items.filter((i) => i.direction === 'IN') ?? [];
   const outgoing = data?.items.filter((i) => i.direction === 'OUT') ?? [];

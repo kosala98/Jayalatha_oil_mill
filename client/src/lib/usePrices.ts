@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/endpoints';
 import type { PriceMap } from '../domain/prices';
+import { onLiveChange } from './live';
 
 const CACHE_KEY = 'pos.prices';
 
@@ -35,6 +36,13 @@ export async function refreshPrices(): Promise<void> {
   const rows = await api.prices();
   publish(Object.fromEntries(rows.map((r) => [r.id, String(r.amount)])));
 }
+
+// Someone changed a price on another device: every open screen picks it up.
+onLiveChange(['prices'], () => {
+  refreshPrices().catch(() => {
+    /* offline: the next reconnect catches up */
+  });
+});
 
 /** Applies what was just saved, so every open screen sees it without a round trip. */
 export function applyPrices(changed: PriceMap): void {

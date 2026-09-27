@@ -10,6 +10,7 @@ import type { CashEntry, Period, Purchase, Sale } from '../../domain/types';
 import { S } from '../../i18n';
 import { formatMoney, formatStamp, formatQty } from '../../lib/numbers';
 import { PeriodPicker } from './PeriodPicker';
+import { useLiveRefresh } from '../../lib/live';
 
 /** The history screen lists sales, purchases and cash entries (not settlements). */
 type ListedKind = Exclude<HistoryKind, 'payment'>;
@@ -100,6 +101,11 @@ export function HistoryView() {
     setCursor(null);
     void load(null);
   }, [load]);
+  // A new or deleted row elsewhere: reload the first page (older pages are fetched again on demand).
+  useLiveRefresh(['sales', 'purchases', 'cash_entries'], () => {
+    setCursor(null);
+    void load(null);
+  });
 
   const shown = itemsKind === kind ? items : [];
 

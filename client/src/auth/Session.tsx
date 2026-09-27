@@ -2,6 +2,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { api } from '../api/endpoints';
 import { ApiError } from '../api/http';
 import { setSessionExpiredHandler, setSessionToken } from './sessionEvents';
+import { useLiveRefresh } from '../lib/live';
 
 export type Role = 'USER' | 'ADMIN';
 
@@ -96,6 +97,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     (until: string | null) => setSession((prev) => (prev ? { ...prev, temporaryAdminUntil: until } : prev)),
     [],
   );
+
+  // The owner opened or ended a lent window on another device: the counter sees it at once.
+  useLiveRefresh(['temporary_admin_access'], () => {
+    if (session?.role !== 'USER') return;
+    api
+      .session(session.token)
+      .then((s) => setTemporaryAdminUntil(s.temporaryAdminUntil))
+      .catch(() => {
+        /* offline: picked up on the next change or sign-in */
+      });
+  });
 
   const handleAuthError = useCallback(
     (err: unknown) => {

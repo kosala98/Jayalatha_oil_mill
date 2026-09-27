@@ -43,11 +43,19 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 
 ## Auth
 
-- Username + password against `app_users`: one account per role, `admin` (ADMIN) and `user` (USER). Passwords are bcrypt cost 12 (`bcryptjs`), and in SQL `extensions.crypt(..., extensions.gen_salt('bf', 12))`.
+- The app uses no Supabase Auth. Username + password against `app_users`: one account per role, `admin` (ADMIN) and `user` (USER). Passwords are bcrypt cost 12 (`bcryptjs`), and in SQL `extensions.crypt(..., extensions.gen_salt('bf', 12))`.
 - Sessions are the app's own HS256 JWTs (`jose`, secret `JWT_SECRET`) with `sub` = the `app_users.id`, plus `role` and `pv` (the password version). Every request re-reads the account, so bumping `pin_version` ends the old sessions.
 - Middleware: `requireSession` (any account), `requireAdmin` (admin, or `user` during a temporary-access window), `requireFullAdmin` (the admin account only).
-- The function is deployed with `verify_jwt = false` (`supabase/config.toml`). No Supabase anon or service key is used anywhere.
+- The function is deployed with `verify_jwt = false` (`supabase/config.toml`). The only Supabase key in the client is the publishable key, used for Realtime. Never use the secret or service-role key in the client.
 - Wrong passwords are limited per IP in the `rate_limit_hits` table (edge instances share no memory), and an account locks after 10 failures in a row.
+
+## Live updates
+
+- `supabase/migrations/20260927000300_realtime_change_signals.sql`: `public.pos_signal_change()` is an AFTER … FOR EACH STATEMENT trigger that calls `realtime.send({table, op}, 'change', 'pos-changes', false)`. It sends no row data, because the channel is public. It swallows its own errors, so a Realtime failure never blocks a write.
+- `client/src/lib/live.ts`: one supabase-js channel per page, opened by `startLive()` in `main.tsx`. It batches signals over 400 ms and re-signals every table after a reconnect, when the tab becomes visible, or when the device comes back online.
+- Screens subscribe with `useLiveRefresh([tables], refresh)`. Module caches use `onLiveChange` (prices, customers).
+- When you add a table that a screen displays, add it to the trigger list in a new migration and to `LiveTable`/`ALL_TABLES`, then subscribe the screen.
+- Needs `VITE_SUPABASE_PUBLISHABLE_KEY` on the client. The Supabase URL is derived from `VITE_API_URL`. Without the key the app still works, just not live.
 
 ## Schema changes
 
@@ -58,7 +66,7 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 
 ## Environment files (all gitignored)
 
-- `client/.env` — only `VITE_API_URL=https://yeudnyjyfbzrfxfedksp.supabase.co/functions/v1`. This points local dev at the **live** backend and real data. On Vercel it is set in the project settings.
+- `client/.env` — `VITE_API_URL=https://yeudnyjyfbzrfxfedksp.supabase.co/functions/v1` and `VITE_SUPABASE_PUBLISHABLE_KEY` (public by design). This points local dev at the **live** backend and real data. On Vercel both are set in the project settings.
 - `supabase/functions/.env` — the function's secrets: `JWT_SECRET`, `CORS_ORIGINS`, session TTLs, `BUSINESS_UTC_OFFSET_MINUTES`, `ALLOW_NEGATIVE_CHARCOAL_STOCK`.
 - `supabase/.env` — `SUPABASE_DB_PASSWORD` and the DB URLs for the Supabase CLI. Never put these in the client.
 

@@ -13,9 +13,11 @@ import '@fontsource/noto-sans-sinhala/600.css';
 import './styles.css';
 
 import { App } from './App';
+import { startLive } from './lib/live';
 import { startOutboxSync } from './offline/outbox';
 
 startOutboxSync();
+startLive();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

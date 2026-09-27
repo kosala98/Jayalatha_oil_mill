@@ -12,6 +12,7 @@ import { S, t } from '../../i18n';
 import { uuid } from '../../lib/ids';
 import { formatMoney, formatQty } from '../../lib/numbers';
 import { PeriodPicker } from './PeriodPicker';
+import { LEDGER_TABLES, useLiveRefresh } from '../../lib/live';
 
 const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === code)?.nameSi ?? code;
 
@@ -39,6 +40,7 @@ export function StatsView() {
   useEffect(() => {
     void load();
   }, [load]);
+  useLiveRefresh(LEDGER_TABLES, () => void load());
 
   return (
     <div className="stack">

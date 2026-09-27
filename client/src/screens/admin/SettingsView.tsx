@@ -7,6 +7,7 @@ import { Segmented } from '../../components/Segmented';
 import { useToast } from '../../components/Toast';
 import { S, t } from '../../i18n';
 import { formatTime } from '../../lib/numbers';
+import { useLiveRefresh } from '../../lib/live';
 
 const ROLES = [
   { value: 'USER', label: S.settings.roleUser },
@@ -50,6 +51,7 @@ export function SettingsView() {
   useEffect(() => {
     void loadAccess();
   }, [loadAccess]);
+  useLiveRefresh(['temporary_admin_access'], () => void loadAccess());
 
   async function changePin(e: FormEvent) {
     e.preventDefault();
