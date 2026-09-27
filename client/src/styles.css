@@ -1661,12 +1661,14 @@ button {
     grid-auto-columns: minmax(max-content, 1fr);
   }
   .tabs__tab {
-    min-height: 54px;
-    font-size: var(--t-md);
+    min-height: 44px;
+    padding: 4px 12px;
+    font-size: var(--t-sm);
   }
 
   .card {
-    padding: 22px 24px;
+    gap: 12px;
+    padding: 14px 18px;
   }
   .card--center {
     max-width: 440px;
@@ -1691,8 +1693,8 @@ button {
   .entry__side {
     grid-column: 2;
     position: sticky;
-    top: 68px; /* below the sticky tabs */
-    max-height: calc(100dvh - 84px);
+    top: 56px; /* below the sticky tabs */
+    max-height: calc(100dvh - 68px);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: 4px;
@@ -1705,11 +1707,12 @@ button {
   }
 
   .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
   }
   .product-chip {
-    min-height: 60px;
+    min-height: 42px;
+    padding: 6px 10px;
   }
 
   /* Weight deductions: a row of small fields instead of a tall column. */
@@ -1730,11 +1733,110 @@ button {
     border-block-end: 1px solid var(--rule-soft);
   }
 
+  .readout {
+    padding: 12px 18px 14px;
+  }
   .readout__value {
-    font-size: 2.75rem;
+    font-size: 2.25rem;
   }
   .readout--xl .readout__value {
-    font-size: 3.25rem;
+    font-size: 2.5rem;
+  }
+
+  /* Compact density: a mouse and keyboard need far smaller targets than a thumb,
+     so the counter PC gets more on screen and less scrolling. */
+  .stack {
+    gap: 10px;
+  }
+  .panel {
+    padding-top: 12px;
+  }
+  .masthead {
+    padding: 8px 0 6px;
+  }
+  .masthead__name {
+    font-size: 1.25rem;
+  }
+  .status {
+    min-height: 30px;
+  }
+  .field {
+    gap: 4px;
+  }
+  .field__label {
+    font-size: 0.875rem;
+  }
+  .field-row {
+    gap: 10px;
+  }
+  .input {
+    min-height: 40px;
+  }
+  .input input {
+    padding: 7px 10px;
+    font-size: 1rem;
+  }
+  .field--big .input {
+    min-height: 50px;
+  }
+  .field--big .input input {
+    font-size: 1.5rem;
+  }
+  .textarea {
+    padding: 8px 10px;
+  }
+  .check {
+    min-height: 32px;
+  }
+  .segmented {
+    padding: 3px;
+  }
+  .segmented__option {
+    min-height: 34px;
+    padding: 4px 8px;
+  }
+  .segmented--sm .segmented__option {
+    min-height: 30px;
+  }
+  .btn {
+    min-height: 38px;
+    padding: 0 14px;
+    font-size: 0.9375rem;
+  }
+  .btn--lg {
+    min-height: 46px;
+    font-size: 1rem;
+  }
+  .btn--sm {
+    min-height: 30px;
+    padding: 0 10px;
+  }
+  .drawer {
+    margin-block: 0;
+    padding: 8px 12px;
+  }
+  .basket-strip {
+    padding: 6px 10px;
+  }
+  .figures {
+    gap: 12px 14px;
+  }
+  .figure__value {
+    font-size: 1.0625rem;
+  }
+  .history__row {
+    padding: 9px 14px;
+  }
+  .customer-row {
+    min-height: 44px;
+    padding: 8px 4px;
+  }
+  .dialog__body {
+    gap: 10px;
+    padding: 16px 18px;
+  }
+  .form-error {
+    padding: 8px 12px;
   }
 
   .toast-region {
