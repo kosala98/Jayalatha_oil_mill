@@ -7,7 +7,7 @@ import { Segmented } from '../../components/Segmented';
 import { useToast } from '../../components/Toast';
 import { S, t } from '../../i18n';
 import { formatTime } from '../../lib/numbers';
-import { useLiveRefresh } from '../../lib/live';
+import { useLatestGuard, useLiveRefresh } from '../../lib/live';
 
 const ROLES = [
   { value: 'USER', label: S.settings.roleUser },
@@ -38,15 +38,17 @@ export function SettingsView() {
   const [reason, setReason] = useState('');
   const [grantError, setGrantError] = useState<string | null>(null);
 
+  const begin = useLatestGuard();
   const loadAccess = useCallback(async () => {
     if (!session) return;
+    const isCurrent = begin();
     try {
       const { expiresAt } = await api.temporaryAccess(session.token);
-      setUntil(expiresAt);
+      if (isCurrent()) setUntil(expiresAt);
     } catch (err) {
-      if (!handleAuthError(err)) setGrantError(describeError(err));
+      if (isCurrent() && !handleAuthError(err)) setGrantError(describeError(err));
     }
-  }, [session, handleAuthError]);
+  }, [session, handleAuthError, begin]);
 
   useEffect(() => {
     void loadAccess();

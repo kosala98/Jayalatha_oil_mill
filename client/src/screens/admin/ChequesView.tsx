@@ -7,7 +7,7 @@ import { todayIso } from '../../domain/payment';
 import type { ChequeDay, ChequeItem } from '../../domain/types';
 import { S, t } from '../../i18n';
 import { formatMoney } from '../../lib/numbers';
-import { useLiveRefresh } from '../../lib/live';
+import { useLatestGuard, useLiveRefresh } from '../../lib/live';
 
 /**
  * "Which cheques go to the bank today?" — the question this screen exists for.
@@ -22,18 +22,21 @@ export function ChequesView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const begin = useLatestGuard();
   const load = useCallback(async () => {
     if (!session) return;
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
-      setData(await api.cheques(from, to < from ? from : to, session.token));
+      const next = await api.cheques(from, to < from ? from : to, session.token);
+      if (isCurrent()) setData(next);
     } catch (err) {
-      if (!handleAuthError(err)) setError(describeError(err));
+      if (isCurrent() && !handleAuthError(err)) setError(describeError(err));
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [session, handleAuthError, from, to]);
+  }, [session, handleAuthError, from, to, begin]);
 
   useEffect(() => {
     void load();

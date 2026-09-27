@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/endpoints';
 import type { PriceMap } from '../domain/prices';
-import { onLiveChange } from './live';
+import { latestOnly, onLiveChange } from './live';
 
 const CACHE_KEY = 'pos.prices';
 
@@ -32,9 +32,12 @@ function publish(next: PriceMap) {
   listeners.forEach((l) => l());
 }
 
+const fetchPrices = latestOnly(() => api.prices());
+
 export async function refreshPrices(): Promise<void> {
-  const rows = await api.prices();
-  publish(Object.fromEntries(rows.map((r) => [r.id, String(r.amount)])));
+  const result = await fetchPrices();
+  if (!result.fresh) return; // a newer fetch is already on its way
+  publish(Object.fromEntries(result.value.map((r) => [r.id, String(r.amount)])));
 }
 
 // Someone changed a price on another device: every open screen picks it up.

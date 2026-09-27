@@ -2,22 +2,24 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/endpoints';
 import { FALLBACK_PRODUCTS } from '../domain/catalog';
 import type { Product } from '../domain/types';
-import { useLiveRefresh } from './live';
+import { useLatestGuard, useLiveRefresh } from './live';
 
 /** Server catalog when reachable (service worker caches it), bundled copy otherwise. */
 export function useProducts(): Product[] {
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
+  const begin = useLatestGuard();
 
   const load = useCallback((isCancelled: () => boolean = () => false) => {
+    const isCurrent = begin();
     api
       .products()
       .then((list) => {
-        if (!isCancelled() && Array.isArray(list) && list.length > 0) setProducts(list);
+        if (!isCancelled() && isCurrent() && Array.isArray(list) && list.length > 0) setProducts(list);
       })
       .catch(() => {
         /* offline with an empty cache — the bundled catalog is already showing */
       });
-  }, []);
+  }, [begin]);
 
   useEffect(() => {
     let cancelled = false;

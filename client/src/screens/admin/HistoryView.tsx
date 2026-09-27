@@ -10,7 +10,7 @@ import type { CashEntry, Period, Purchase, Sale } from '../../domain/types';
 import { S } from '../../i18n';
 import { formatMoney, formatStamp, formatQty } from '../../lib/numbers';
 import { PeriodPicker } from './PeriodPicker';
-import { useLiveRefresh } from '../../lib/live';
+import { useLatestGuard, useLiveRefresh } from '../../lib/live';
 
 /** The history screen lists sales, purchases and cash entries (not settlements). */
 type ListedKind = Exclude<HistoryKind, 'payment'>;
@@ -77,23 +77,26 @@ export function HistoryView() {
   const [reasonError, setReasonError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const begin = useLatestGuard();
   const load = useCallback(
     async (append: string | null) => {
       if (!session) return;
+      const isCurrent = begin();
       setLoading(true);
       setError(null);
       try {
         const page = await api.list(kind, { period, cursor: append, includeDeleted }, session.token);
+        if (!isCurrent()) return;
         setItems((prev) => (append ? [...prev, ...page.items] : page.items));
         setItemsKind(kind);
         setCursor(page.nextCursor);
       } catch (err) {
-        if (!handleAuthError(err)) setError(describeError(err));
+        if (isCurrent() && !handleAuthError(err)) setError(describeError(err));
       } finally {
-        setLoading(false);
+        if (isCurrent()) setLoading(false);
       }
     },
-    [kind, period, includeDeleted, session, handleAuthError],
+    [kind, period, includeDeleted, session, handleAuthError, begin],
   );
 
   useEffect(() => {

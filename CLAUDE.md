@@ -52,8 +52,9 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 ## Live updates
 
 - `supabase/migrations/20260927000300_realtime_change_signals.sql`: `public.pos_signal_change()` is an AFTER … FOR EACH STATEMENT trigger that calls `realtime.send({table, op}, 'change', 'pos-changes', false)`. It sends no row data, because the channel is public. It swallows its own errors, so a Realtime failure never blocks a write.
-- `client/src/lib/live.ts`: one supabase-js channel per page, opened by `startLive()` in `main.tsx`. It batches signals over 400 ms and re-signals every table after a reconnect, when the tab becomes visible, or when the device comes back online.
+- `client/src/lib/live.ts`: one supabase-js channel per page, opened by `startLive()` in `main.tsx`. It holds signals until they have been quiet for 700 ms (at most 2.5 s), so a multi-request visit refreshes once, and it re-signals every table after a reconnect, when the tab becomes visible, or when the device comes back online.
 - Screens subscribe with `useLiveRefresh([tables], refresh)`. Module caches use `onLiveChange` (prices, customers).
+- Every live-refreshed loader must drop stale responses. Components call `const isCurrent = begin()` (from `useLatestGuard()`) before fetching and apply the result only if `isCurrent()` still holds. Module-level fetchers are wrapped in `latestOnly(...)`.
 - When you add a table that a screen displays, add it to the trigger list in a new migration and to `LiveTable`/`ALL_TABLES`, then subscribe the screen.
 - Needs `VITE_SUPABASE_PUBLISHABLE_KEY` on the client. The Supabase URL is derived from `VITE_API_URL`. Without the key the app still works, just not live.
 

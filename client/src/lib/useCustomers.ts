@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/endpoints';
 import type { Customer } from '../domain/types';
-import { onLiveChange } from './live';
+import { latestOnly, onLiveChange } from './live';
 
 const CACHE_KEY = 'pos.customers';
 
@@ -36,9 +36,13 @@ function publish(next: Customer[]) {
   listeners.forEach((l) => l());
 }
 
+const fetchCustomers = latestOnly(() => api.customers());
+
 export async function refreshCustomers(): Promise<void> {
   try {
-    publish(await api.customers());
+    const result = await fetchCustomers();
+    if (!result.fresh) return; // a newer fetch is already on its way
+    publish(result.value);
     lastFetchFailed = false;
   } catch {
     // Offline or server down: keep showing what we had.

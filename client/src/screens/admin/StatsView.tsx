@@ -12,7 +12,7 @@ import { S, t } from '../../i18n';
 import { uuid } from '../../lib/ids';
 import { formatMoney, formatQty } from '../../lib/numbers';
 import { PeriodPicker } from './PeriodPicker';
-import { LEDGER_TABLES, useLiveRefresh } from '../../lib/live';
+import { LEDGER_TABLES, useLatestGuard, useLiveRefresh } from '../../lib/live';
 
 const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === code)?.nameSi ?? code;
 
@@ -24,18 +24,21 @@ export function StatsView() {
   const [loading, setLoading] = useState(true);
   const [fixing, setFixing] = useState(false);
 
+  const begin = useLatestGuard();
   const load = useCallback(async () => {
     if (!session) return;
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
-      setStats(await api.stats(period, session.token));
+      const next = await api.stats(period, session.token);
+      if (isCurrent()) setStats(next);
     } catch (err) {
-      if (!handleAuthError(err)) setError(describeError(err));
+      if (isCurrent() && !handleAuthError(err)) setError(describeError(err));
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [period, session, handleAuthError]);
+  }, [period, session, handleAuthError, begin]);
 
   useEffect(() => {
     void load();

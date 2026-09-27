@@ -34,16 +34,16 @@ const KEY = 'pos.session';
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 /**
- * The counter signs in once and stays signed in through the day, so its session is
- * kept on the device. An admin session is never stored: closing the tab, reloading,
- * or half an hour passing all bring back the sign-in screen.
+ * Both accounts stay signed in across a reload or a closed tab, until the session
+ * expires (USER_SESSION_TTL_MINUTES / ADMIN_SESSION_TTL_MINUTES on the server) or
+ * someone signs out.
  */
 function readStored(): Session | null {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Session;
-    if (parsed.role !== 'USER' || typeof parsed.token !== 'string') return null;
+    if ((parsed.role !== 'USER' && parsed.role !== 'ADMIN') || typeof parsed.token !== 'string') return null;
     if (new Date(parsed.expiresAt).getTime() <= Date.now()) return null;
     return parsed;
   } catch {
@@ -53,7 +53,7 @@ function readStored(): Session | null {
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(() => {
-    // A stored counter session must be usable before the first render finishes.
+    // A stored session must be usable before the first render finishes.
     const stored = readStored();
     setSessionToken(stored?.token ?? null);
     return stored;
@@ -63,15 +63,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setSession(next);
     // Do this first: a queued transaction may be sent the instant this returns.
     setSessionToken(next?.token ?? null);
+  }, []);
+
+  // Kept in step with every change, including a lent admin window opening or ending.
+  useEffect(() => {
     try {
-      if (next && next.role === 'USER') localStorage.setItem(KEY, JSON.stringify(next));
+      if (session) localStorage.setItem(KEY, JSON.stringify(session));
       else localStorage.removeItem(KEY);
     } catch {
       /* private mode: the session simply lasts for this tab */
     }
-  }, []);
+  }, [session]);
 
-  // A 401 from a background send means this session is finished — show the PIN pad
+  // A 401 from a background send means this session is finished — show the sign-in screen
   // rather than letting every save fail silently behind a screen that looks fine.
   useEffect(() => {
     setSessionExpiredHandler(() => store(null));

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { API_URL } from '../api/http';
 
 /**
@@ -44,21 +44,52 @@ type Listener = (changed: ReadonlySet<LiveTable>) => void;
 
 const listeners = new Set<Listener>();
 let pending = new Set<LiveTable>();
-let timer: ReturnType<typeof setTimeout> | null = null;
+let quietTimer: ReturnType<typeof setTimeout> | null = null;
+let firstPendingAt = 0;
+
+/** Wait this long after the last signal before refreshing... */
+const QUIET_MS = 700;
+/** ...but never longer than this after the first one. */
+const MAX_WAIT_MS = 2500;
+
+function deliver(): void {
+  if (quietTimer) clearTimeout(quietTimer);
+  quietTimer = null;
+  const batch = pending;
+  pending = new Set();
+  firstPendingAt = 0;
+  listeners.forEach((l) => l(batch));
+}
 
 /**
- * Changes arriving close together (a visit saves a purchase, a sale and a settlement)
- * are delivered as one batch, so each screen fetches once rather than three times.
+ * A visit is saved as several requests in a row (the copra purchase, the oil sale,
+ * the settlement), each committing on its own. Signals are held until they stop
+ * arriving for a moment, so every screen refreshes once and shows the whole visit
+ * together instead of half of it first.
  */
 function signal(tables: Iterable<LiveTable>): void {
   for (const t of tables) pending.add(t);
-  if (timer) return;
-  timer = setTimeout(() => {
-    const batch = pending;
-    pending = new Set();
-    timer = null;
-    listeners.forEach((l) => l(batch));
-  }, 400);
+  const now = Date.now();
+  if (!firstPendingAt) firstPendingAt = now;
+  if (quietTimer) clearTimeout(quietTimer);
+  const wait = Math.min(QUIET_MS, Math.max(0, firstPendingAt + MAX_WAIT_MS - now));
+  quietTimer = setTimeout(deliver, wait);
+}
+
+/**
+ * Wraps a loader so only the newest call may apply its result. Refreshes overlap
+ * (a signal arrives while the previous fetch is still in flight), and without this an
+ * older, slower response could land last and put stale figures back on the screen.
+ */
+export function latestOnly<A extends unknown[], T>(
+  fetcher: (...args: A) => Promise<T>,
+): (...args: A) => Promise<{ fresh: true; value: T } | { fresh: false }> {
+  let seq = 0;
+  return async (...args: A) => {
+    const mine = ++seq;
+    const value = await fetcher(...args);
+    return mine === seq ? { fresh: true, value } : { fresh: false };
+  };
 }
 
 /** Subscribe outside React (module-level caches such as prices and customers). */
@@ -70,6 +101,18 @@ export function onLiveChange(tables: readonly LiveTable[], fn: () => void): () =
   return () => {
     listeners.delete(listener);
   };
+}
+
+/**
+ * For component loaders: `const isCurrent = begin();` before fetching, and apply the
+ * result only if `isCurrent()` is still true afterwards (see latestOnly).
+ */
+export function useLatestGuard(): () => () => boolean {
+  const seq = useRef(0);
+  return useCallback(() => {
+    const mine = ++seq.current;
+    return () => mine === seq.current;
+  }, []);
 }
 
 /** Calls `refresh` whenever one of `tables` changes. Always uses the latest `refresh`. */

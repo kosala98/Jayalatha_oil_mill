@@ -16,7 +16,7 @@ import { checkPositive, formatMoney, formatQty, formatStamp } from '../lib/numbe
 import { useCustomers } from '../lib/useCustomers';
 import { FALLBACK_PRODUCTS } from '../domain/catalog';
 import { useSubmit } from '../lib/useSubmit';
-import { useLiveRefresh } from '../lib/live';
+import { useLatestGuard, useLiveRefresh } from '../lib/live';
 
 /**
  * Daily customers: the people who take oil now and pay at the end of the month.
@@ -189,12 +189,15 @@ function CustomerProfileView({ id, onBack }: { id: string; onBack(): void }) {
   const [settling, setSettling] = useState<'SETTLEMENT' | 'LOAN' | null>(null);
   const [range, setRange] = useState<'today' | 'month' | 'all'>('all');
 
+  const begin = useLatestGuard();
   async function load() {
+    const isCurrent = begin();
     setError(null);
     try {
-      setProfile(await api.customer(id));
+      const next = await api.customer(id);
+      if (isCurrent()) setProfile(next);
     } catch (err) {
-      setError(describeError(err));
+      if (isCurrent()) setError(describeError(err));
     }
   }
 
