@@ -347,6 +347,7 @@ export const si = {
     VALIDATION_ERROR: 'ඇතුළත් කළ දත්ත වැරදියි. පරීක්ෂා කර නැවත උත්සාහ කරන්න.',
     WRONG_PIN: 'PIN අංකය වැරදියි.',
     WRONG_CREDENTIALS: 'පරිශීලක නාමය හෝ මුරපදය වැරදියි.',
+    DB_TIMEOUT: 'සේවාදායකය ප්‍රතිචාර දැක්වීමට ප්‍රමාද විය. නැවත උත්සාහ කරන්න.',
     PIN_LOCKED: 'වැරදි මුරපද වැඩියි. මිනිත්තු {minutes} කින් නැවත උත්සාහ කරන්න.',
     TOO_MANY_ATTEMPTS: 'උත්සාහයන් වැඩියි. මිනිත්තු 15 කින් නැවත උත්සාහ කරන්න.',
     PIN_NOT_CONFIGURED: 'PIN අංක තවම සකසා නැත.',
@@ -411,7 +412,8 @@ export const si = {
     payable: 'ගෙවිය යුතු මුදල්',
     customerCash: 'ණය අයකර ගැනීම්',
     count: 'ගනුදෙනු {n}',
-    byProduct: 'නිෂ්පාදන අනුව',
+    byProduct: 'විකුණුම් — නිෂ්පාදන අනුව',
+    byMaterial: 'මිලදී ගැනීම් — ද්‍රව්‍ය අනුව',
   },
   history: {
     types: { sale: 'විකුණුම්', purchase: 'මිලදී ගැනීම්', cash: 'මුදල්', payment: 'ගෙවීම්', customer: 'ගනුදෙනුකරු' },

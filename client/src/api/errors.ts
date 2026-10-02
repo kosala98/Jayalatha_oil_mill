@@ -14,6 +14,7 @@ export function describeError(err: unknown): string {
     case 'VALIDATION_ERROR':
     case 'WRONG_PIN':
     case 'WRONG_CREDENTIALS':
+    case 'DB_TIMEOUT':
     case 'TOO_MANY_ATTEMPTS':
     case 'ALREADY_DELETED':
     case 'SESSION_REQUIRED':

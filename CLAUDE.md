@@ -32,6 +32,7 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 ## Backend conventions
 
 - **Database access** is postgres.js over `SUPABASE_DB_URL` (`db.ts`), with `transform: postgres.camel`: write SQL in snake_case, and rows come back camelCased. Never use supabase-js or the REST API.
+- **Connection handling** (`db.ts`, `index.ts`): `sql` is an exported `let`, a live binding. `freshPoolForRequest()` replaces the pool when the instance has been idle longer than the 20 s idle timeout: the edge runtime freezes idle instances, so their timers never close stale sockets. Every request also has a 12 s deadline; on expiry it calls `resetPool()` and returns a retryable `503 DB_TIMEOUT`, which the client's outbox resends (idempotent on `clientId`). Always import `sql` from `db.ts`; never copy it into a local constant.
 - **Model-shaped reads** use the column lists in `COLS` via `cols(db, 'sales')`. `device_id` is exposed as `installId`. Keep API responses field-for-field compatible; the client depends on them.
 - **Money and quantities** stay strings end to end (Postgres `numeric` → string). Do the maths with `Dec` from `lib/decimal.ts`, never with JS numbers. Cheque deposit dates are `'YYYY-MM-DD'` strings cast with `::date`.
 - **Every write** runs in `transaction(...)` and calls `writeAudit(tx, ...)` in the same transaction.

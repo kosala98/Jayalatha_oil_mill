@@ -12,7 +12,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { ZodError } from 'zod';
 import { config } from './config.ts';
-import { sql } from './db.ts';
+import { freshPoolForRequest, markPoolActivity, resetPool, sql } from './db.ts';
 import { HttpError } from './lib/errors.ts';
 import type { AppEnv } from './lib/http.ts';
 import { authRouter } from './routes/auth.ts';
@@ -37,6 +37,35 @@ app.use(
     maxAge: 600,
   }),
 );
+
+/**
+ * No request may wait on the database forever. The client gives up at 15 s and keeps the
+ * transaction queued; answering at 12 s with a retryable 503 lets it resend promptly, and
+ * resetting the pool clears whatever connection was stuck. A resend is safe: creates are
+ * idempotent on clientId.
+ */
+const REQUEST_DEADLINE_MS = 12_000;
+
+class RequestTimeout extends Error {}
+
+app.use('*', async (c, next) => {
+  freshPoolForRequest();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new RequestTimeout()), REQUEST_DEADLINE_MS);
+  });
+  try {
+    await Promise.race([next(), deadline]);
+  } catch (err) {
+    if (!(err instanceof RequestTimeout)) throw err;
+    console.error(`[timeout] ${c.req.method} ${c.req.path} — resetting the database pool`);
+    resetPool();
+    throw new HttpError(503, 'DB_TIMEOUT', 'The database did not answer in time. Please try again.');
+  } finally {
+    clearTimeout(timer);
+    markPoolActivity();
+  }
+});
 
 // API responses are never cached unless a route says otherwise (the product catalog).
 app.use('*', async (c, next) => {

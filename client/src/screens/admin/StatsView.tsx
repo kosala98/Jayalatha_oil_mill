@@ -128,6 +128,23 @@ export function StatsView() {
               </ul>
             </section>
           )}
+
+          {stats.purchases.byMaterial.length > 0 && (
+            <section className="card">
+              <h3 className="card__title">{S.stats.byMaterial}</h3>
+              <ul className="breakdown">
+                {stats.purchases.byMaterial.map((m) => (
+                  <li key={m.material}>
+                    <span className="breakdown__name">{S.labels.materials[m.material]}</span>
+                    <span className="muted small">
+                      {formatQty(m.quantityKg)} KG · {t(S.stats.count, { n: m.count })}
+                    </span>
+                    <span className="breakdown__amount">{formatMoney(m.total)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       )}
 

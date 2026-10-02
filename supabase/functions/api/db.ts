@@ -9,18 +9,59 @@ function cleanUrl(raw: string): string {
   return url.toString();
 }
 
+/** postgres.js closes idle connections after this many seconds — while its timers run. */
+const IDLE_TIMEOUT_S = 20;
+
+function createPool() {
+  return postgres(cleanUrl(config.databaseUrl), {
+    max: 3,
+    idle_timeout: IDLE_TIMEOUT_S,
+    // Fail fast instead of waiting on an unreachable database.
+    connect_timeout: 10,
+    // Works behind Supavisor/PgBouncer transaction pooling as well as direct connections.
+    prepare: false,
+    transform: { ...postgres.camel, undefined: null },
+    onnotice: () => {},
+  });
+}
+
 /**
  * One small pool per function instance. Column names come back camelCased, so rows
  * have the same shape the Prisma API returned. Numerics stay strings, never floats.
+ *
+ * `let`, not `const`: importers see the live binding, so a replaced pool is picked up
+ * everywhere at once.
  */
-export const sql = postgres(cleanUrl(config.databaseUrl), {
-  max: 3,
-  idle_timeout: 20,
-  // Works behind Supavisor/PgBouncer transaction pooling as well as direct connections.
-  prepare: false,
-  transform: { ...postgres.camel, undefined: null },
-  onnotice: () => {},
-});
+export let sql = createPool();
+
+let lastActivity = Date.now();
+
+/**
+ * Throws the pool away and starts a new one. Closing does not wait for anything, so a
+ * query stuck on a dead connection fails at once instead of hanging the request.
+ */
+export function resetPool(): void {
+  const old = sql;
+  sql = createPool();
+  old.end({ timeout: 0 }).catch(() => {});
+}
+
+/**
+ * Call at the start of every request. The edge runtime freezes an idle instance, and
+ * frozen timers never close idle connections — so after a quiet spell the pool may hold
+ * sockets the network has already dropped, and a query sent on one hangs instead of
+ * failing. After longer than the idle timeout without a request, start fresh.
+ */
+export function freshPoolForRequest(): void {
+  const idleMs = Date.now() - lastActivity;
+  lastActivity = Date.now();
+  if (idleMs > IDLE_TIMEOUT_S * 1000) resetPool();
+}
+
+/** Call when a request finishes, so a busy instance keeps its warm connections. */
+export function markPoolActivity(): void {
+  lastActivity = Date.now();
+}
 
 /** Either the pool or an open transaction — both run the same tagged-template queries. */
 export type Db = postgres.Sql | postgres.TransactionSql;
