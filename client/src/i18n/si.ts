@@ -454,7 +454,7 @@ export const si = {
     units: { LITER: 'ලීටර්', KG: 'KG', BOTTLE: 'බෝතල්' },
     bottleSizes: { QUARTER: '¼ L', HALF: '½ L', ONE: '1 L' },
     payment: { CASH: 'මුදල්', CHEQUE: 'චෙක්පත්', CREDIT: 'ණය' },
-    materials: { COPRA: 'කොපරා', CHARCOAL: 'පොල්කටු අඟුරු', OTHER: 'වෙනත්' },
+    materials: { COPRA: 'කොප්පරා', CHARCOAL: 'පොල්කටු අඟුරු', OTHER: 'වෙනත්' },
     cashTypes: { OPENING_FLOAT: 'ආරම්භක මුදල', TOP_UP: 'මුදල් එකතු කිරීම', EXPENSE: 'වියදම්' },
     directions: { RECEIVED: 'ලැබුණා', PAID: 'ගෙවුවා' },
     ledgerKinds: { sale: 'විකුණුම', purchase: 'මිලදී ගැනීම', payment: 'ගෙවීම', loan: 'පුද්ගලික ණය' },
