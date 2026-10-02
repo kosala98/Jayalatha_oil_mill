@@ -43,7 +43,10 @@ export function CombinedScreen({ onBack, onSaved }: { onBack?(): void; onSaved?(
           creditAmount: line.creditAmount,
           chequeNumber: line.chequeNumber,
           chequeDepositDate: line.chequeDepositDate,
-          customerId: line.customerId,
+          // The visit belongs to one customer, even when a line was typed before anyone
+          // was picked (copra weighed, paid in cash) — otherwise that half never reaches
+          // the customer's profile.
+          customerId: line.customerId ?? customerId,
         };
         if (line.kind === 'sale') {
           await submit('sale', {
