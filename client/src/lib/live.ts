@@ -126,6 +126,39 @@ export function useLiveRefresh(tables: readonly LiveTable[], refresh: () => void
   );
 }
 
+/** Sri Lanka is UTC+5:30 all year (no daylight saving), as on the server. */
+const BUSINESS_OFFSET_MS = 330 * 60_000;
+const DAY_MS = 86_400_000;
+
+/** Milliseconds until the next 00:00 in Sri Lanka. */
+export function msUntilBusinessMidnight(now: number = Date.now()): number {
+  const local = now + BUSINESS_OFFSET_MS;
+  return (Math.floor(local / DAY_MS) + 1) * DAY_MS - local;
+}
+
+/**
+ * Calls `refresh` just after midnight (Sri Lanka time), every night. "Today" starts
+ * again from zero then, and a summary left open overnight must not keep showing
+ * yesterday. Nothing is deleted: older days stay under the week/month/all periods
+ * and in the history. (A tablet that slept through midnight refreshes when it wakes,
+ * through the visibility catch-up in startLive.)
+ */
+export function useNewDayRefresh(refresh: () => void): void {
+  const latest = useRef(refresh);
+  latest.current = refresh;
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        latest.current();
+        schedule();
+      }, msUntilBusinessMidnight() + 2_000);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, []);
+}
+
 /** https://<ref>.supabase.co — given directly, or taken from the functions URL. */
 function supabaseUrl(): string | null {
   const explicit = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();

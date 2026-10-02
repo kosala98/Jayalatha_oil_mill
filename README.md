@@ -221,7 +221,7 @@ Underneath, both halves are recorded in full, because both really happened: the 
 
 **Charcoal stock** = Σ charcoal purchases − Σ charcoal sales (non-deleted), always all-time. Every write that changes it takes a Postgres transaction-scoped advisory lock, so two simultaneous charcoal sales can't both pass the stock check.
 
-**Cash balance** = Σ cash entries + Σ cash sales − Σ cash purchases for the selected period; cheques are shown separately. "Today" therefore gives the cash drawer figure when the opening float is entered each morning.
+**Cash balance** = Σ cash entries + Σ cash sales − Σ cash purchases for the selected period; cheques are shown separately. "Today" therefore gives the cash drawer figure when the opening float is entered each morning. At 00:00 Sri Lanka time "today" starts again from zero; an open summary or history refreshes itself at midnight. Nothing is deleted: earlier days stay in the database, under the week / month / all periods and in the history.
 
 **Liters sold** counts liter sales plus bottles converted by size (¼, ½, 1 L). **KG sold** excludes charcoal, which is reported on its own.
 
