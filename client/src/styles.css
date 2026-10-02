@@ -1537,6 +1537,10 @@ button {
 }
 
 @media print {
+  /* The printer driver's paper (80mm roll) sets the size; no browser margins on top. */
+  @page {
+    margin: 0;
+  }
   /* Only the receipt goes to the roll — no tabs, no buttons, no page chrome. */
   body * {
     visibility: hidden;

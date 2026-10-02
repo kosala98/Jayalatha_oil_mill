@@ -1,6 +1,11 @@
+import { useEffect } from 'react';
 import type { BillData } from '../domain/bill';
 import { S, t } from '../i18n';
+import { isAutoPrintOn, useAutoPrint } from '../lib/autoPrint';
 import { formatMoney, formatStamp } from '../lib/numbers';
+
+/** Bills already sent to the printer, so a re-render never prints one twice. */
+const printed = new Set<string>();
 
 /**
  * The 80mm receipt, printed straight from the browser so the counter tablet can send
@@ -12,6 +17,29 @@ export function Bill({ data, onClose }: { data: BillData; onClose(): void }) {
   const taken = data.items.filter((i) => i.side === 'out');
   const bothSides = brought.length > 0 && taken.length > 0;
   const net = Number(data.net);
+  const [autoPrint, setAutoPrint] = useAutoPrint();
+
+  // Counter PC: print as soon as the bill is on screen, then clear it for the next
+  // customer. Waits for the fonts, or the Sinhala text could print in a fallback face.
+  useEffect(() => {
+    const key = `${data.billNo}|${data.at}`;
+    if (!isAutoPrintOn() || printed.has(key)) return;
+    let cancelled = false;
+    const afterPrint = () => onClose();
+    const timer = setTimeout(() => {
+      void document.fonts.ready.then(() => {
+        if (cancelled || printed.has(key)) return;
+        printed.add(key);
+        window.addEventListener('afterprint', afterPrint, { once: true });
+        window.print();
+      });
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener('afterprint', afterPrint);
+    };
+  }, [data.billNo, data.at, onClose]);
 
   return (
     <div className="stack bill-wrap">
@@ -109,6 +137,10 @@ export function Bill({ data, onClose }: { data: BillData; onClose(): void }) {
           {S.bill.print}
         </button>
       </div>
+      <label className="check bill__auto">
+        <input type="checkbox" checked={autoPrint} onChange={(e) => setAutoPrint(e.target.checked)} />
+        {S.bill.autoPrint}
+      </label>
     </div>
   );
 }

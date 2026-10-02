@@ -104,6 +104,31 @@ What the app talks to depends on `client/.env`:
 | `npm run secrets:push` | Uploads `supabase/functions/.env` as the function's secrets |
 | `npm run deploy:functions` | Deploys the `api` function |
 
+## Receipt printer (Epson TM-T82, Ethernet)
+
+The bill prints from the browser through the normal Windows printer, so the printer is
+installed once on the counter PC and the web app needs nothing printer-specific.
+
+1. **Network.** Plug the printer's Ethernet port into the same router/switch as the PC.
+   Turn it off, hold **FEED** and turn it on: it prints a status sheet with its IP address.
+   Give it a fixed address (in EpsonNet Config, or by reserving that IP for the printer in
+   the router) so it never changes.
+2. **Driver.** Install *Epson Advanced Printer Driver (APD)* for the TM-T82 from Epson's
+   support site. In the installer, add a port of type **Standard TCP/IP** with the printer's
+   IP. Paper: **Roll Paper 80 × 297 mm**, and in the driver's options turn on paper cut at
+   the end of the document and reduce the bottom blank space.
+3. **Default printer.** Windows Settings → Printers → the TM-T82 → *Set as default*, and
+   turn off "Let Windows manage my default printer". Print a Windows test page.
+4. **Silent printing.** Make a desktop shortcut that opens the app in Chrome with printing
+   that skips the dialog:
+   `"C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk-printing --app=https://<your-vercel-url>`
+   Close every Chrome window, then always open the POS from this shortcut (the flag only
+   applies when Chrome starts with it).
+5. **In the app** (once, on that PC): save any transaction, and on the bill tick
+   *"මෙම උපාංගයේ, සුරැකූ විගස බිල්පත ස්වයංක්‍රීයව මුද්‍රණය කරන්න"*. From then on every
+   සුරකින්න prints the bill and clears it for the next customer. The switch is per device:
+   phones and other PCs are unaffected.
+
 ## Operations
 
 **Changing the schema.** Add a new file to `supabase/migrations/` (`npx supabase migration new <name>`) and run `npx supabase db push`. Never edit a migration that has already been pushed.

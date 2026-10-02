@@ -55,6 +55,11 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 - Mobile-first CSS in `client/src/styles.css`. The phone layout must not change. Wide-screen rules live only in the "Wider screens" section at the end of the file (`min-width: 900px` and `1280px`, plus `(hover: hover)` for mouse hover).
 - Sale, purchase and visit forms are `form.stack.entry` with two children: `.entry__main` (the inputs) and `.entry__side` (readout, payment, errors, save buttons). On wide screens they become two columns, and the side panel is sticky. New entry-style screens should follow the same structure. Single-purpose forms use `.form--narrow`.
 
+## Printing
+
+- Bills print with `window.print()`. The `@media print` block in `styles.css` hides everything except `#bill-print` (72 mm wide, `@page { margin: 0 }`). The receipt printer is a normal Windows printer; the app has no printer-specific code.
+- Auto-print is a per-device localStorage switch (`lib/autoPrint.ts`, key `pos.autoPrint`). When it's on, `Bill.tsx` prints once per bill after `document.fonts.ready`, then closes the bill on `afterprint`. It is meant for Chrome started with `--kiosk-printing`.
+
 ## Live updates
 
 - `supabase/migrations/20260927000300_realtime_change_signals.sql`: `public.pos_signal_change()` is an AFTER … FOR EACH STATEMENT trigger that calls `realtime.send({table, op}, 'change', 'pos-changes', false)`. It sends no row data, because the channel is public. It swallows its own errors, so a Realtime failure never blocks a write.
