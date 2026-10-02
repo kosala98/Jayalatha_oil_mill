@@ -10,7 +10,7 @@ import { containerPriceId, salePriceId } from '../domain/prices';
 import { newBillNo, describePayment } from '../domain/bill';
 import { presentBill } from '../lib/buildBill';
 import { S } from '../i18n';
-import { checkPositive, formatMoney, previewTotal } from '../lib/numbers';
+import { checkPositive, formatMoney, netWeight, previewTotal } from '../lib/numbers';
 import { useCustomers } from '../lib/useCustomers';
 import { applyPrices, usePrices } from '../lib/usePrices';
 import { useProducts } from '../lib/useProducts';
@@ -22,7 +22,9 @@ import { goToTab } from '../lib/navigation';
 import { uuid } from '../lib/ids';
 import { api } from '../api/endpoints';
 
-type Errors = Partial<Record<'quantity' | 'price' | 'bottleSize' | 'customName' | 'containerPrice', string>>;
+type Errors = Partial<
+  Record<'quantity' | 'price' | 'bottleSize' | 'customName' | 'containerPrice' | 'emptyKg' | 'fullKg', string>
+>;
 
 const PRICE_LABEL: Record<UnitType, string> = {
   LITER: S.sale.pricePerLiter,
@@ -40,6 +42,9 @@ export function SaleScreen() {
   const [customName, setCustomName] = useState('');
   const [containerCount, setContainerCount] = useState('');
   const [containerPrice, setContainerPrice] = useState('');
+  // The customer's own bottle or can, weighed empty and then full (KG sales only).
+  const [emptyKg, setEmptyKg] = useState('');
+  const [fullKg, setFullKg] = useState('');
   const [payment, setPayment] = useState<PaymentValue>(emptyPayment);
   const [errors, setErrors] = useState<Errors>({});
   const [paymentErrors, setPaymentErrors] = useState<PaymentErrors | null>(null);
@@ -77,12 +82,20 @@ export function SaleScreen() {
 
   const isBottle = unitType === 'BOTTLE';
   const isOther = product?.code === OTHER_PRODUCT_CODE;
+  /** Weighing in the customer's container: optional, and only for sales by the kilo. */
+  const weighing = unitType === 'KG' && (emptyKg.trim() !== '' || fullKg.trim() !== '');
+  const weighedNet = weighing ? netWeight(fullKg, emptyKg) : null;
   const goodsTotal = previewTotal(quantity, price);
   const containersTotal = previewTotal(containerCount, containerPrice);
   const total = previewTotal(
     '1',
     (Number(goodsTotal || 0) + Number(containersTotal || 0)).toFixed(2),
   );
+
+  // The two readings decide the quantity; the field is locked while they are in use.
+  useEffect(() => {
+    if (weighing) setQuantity(weighedNet ?? '');
+  }, [weighing, weighedNet]);
 
   function validate(): SaleInput | null {
     const e: Errors = {};
@@ -91,6 +104,13 @@ export function SaleScreen() {
     const p = checkPositive(price, 2);
     if (!p.ok) e.price = p.reason === 'decimals' ? S.validation.tooManyDecimals : S.validation.price;
     if (isOther && customName.trim().length < 1) e.customName = S.validation.customName;
+    if (weighing) {
+      const empty = checkPositive(emptyKg, 3);
+      const full = checkPositive(fullKg, 3);
+      if (!empty.ok) e.emptyKg = empty.reason === 'decimals' ? S.validation.tooManyDecimals : S.validation.quantity;
+      if (!full.ok) e.fullKg = full.reason === 'decimals' ? S.validation.tooManyDecimals : S.validation.quantity;
+      else if (empty.ok && !weighedNet) e.fullKg = S.sale.weighOrder;
+    }
     // Someone typed a bottle count but no price for them.
     if (Number(containerCount || 0) > 0 && !checkPositive(containerPrice, 2).ok) {
       e.containerPrice = S.validation.price;
@@ -139,6 +159,8 @@ export function SaleScreen() {
       total: total ?? '0',
     });
     setQuantity('');
+    setEmptyKg('');
+    setFullKg('');
     setCustomName('');
     setContainerCount('');
     setPayment(emptyPayment());
@@ -188,7 +210,9 @@ export function SaleScreen() {
             input.unitType === 'BOTTLE' && input.bottleSize
               ? `${S.labels.bottleSizes[input.bottleSize]} ${S.labels.units.BOTTLE}`
               : S.labels.units[input.unitType]
-          } × ${formatMoney(input.pricePerUnit)}`,
+          } × ${formatMoney(input.pricePerUnit)}${
+            weighing && weighedNet ? ` (${fullKg.trim()} − ${S.sale.containerShort} ${emptyKg.trim()})` : ''
+          }`,
           amount: goodsTotal ?? '0',
         },
         ...(Number(containerCount || 0) > 0
@@ -226,6 +250,8 @@ export function SaleScreen() {
           });
       }
       setQuantity('');
+      setEmptyKg('');
+      setFullKg('');
       setCustomName('');
       setContainerCount('');
       setPayment(emptyPayment());
@@ -289,16 +315,33 @@ export function SaleScreen() {
 
           <div className="field-row">
             <NumberField
-              label={isBottle ? S.sale.quantityBottles : S.sale.quantity}
+              label={weighing ? S.sale.oilWeight : isBottle ? S.sale.quantityBottles : S.sale.quantity}
               value={quantity}
               onChange={setQuantity}
               error={errors.quantity}
               integer={isBottle}
               suffix={isBottle ? undefined : S.labels.units[unitType]}
+              readOnly={weighing}
             />
             <NumberField label={PRICE_LABEL[unitType]} value={price} onChange={setPrice} error={errors.price} />
           </div>
         </section>
+
+        {unitType === 'KG' && (
+          <details className="drawer" open={weighing}>
+            <summary className="drawer__summary">{S.sale.ownContainer}</summary>
+            <p className="muted small">{S.sale.ownContainerHelp}</p>
+            <div className="field-row">
+              <NumberField label={S.sale.emptyKg} value={emptyKg} onChange={setEmptyKg} error={errors.emptyKg} suffix="KG" />
+              <NumberField label={S.sale.fullKg} value={fullKg} onChange={setFullKg} error={errors.fullKg} suffix="KG" />
+            </div>
+            {weighedNet && (
+              <p className="split__remainder is-balanced">
+                {S.sale.oilWeight}: {weighedNet} KG
+              </p>
+            )}
+          </details>
+        )}
 
         <details className="drawer" open={containerCount !== ''}>
           <summary className="drawer__summary">{S.sale.containers}</summary>

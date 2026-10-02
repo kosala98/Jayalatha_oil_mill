@@ -23,6 +23,21 @@ function toScaled(value: string, scale: number): bigint {
   return BigInt(i || '0') * 10n ** BigInt(scale) + BigInt((f + '0'.repeat(scale)).slice(0, scale) || '0');
 }
 
+/**
+ * Net weight from two scale readings, exact to the gram: total − empty container.
+ * Null unless both are valid weights (up to 3 decimals) and the total is the heavier.
+ */
+export function netWeight(totalRaw: string, emptyRaw: string): string | null {
+  const total = checkPositive(totalRaw, 3);
+  const empty = checkPositive(emptyRaw, 3);
+  if (!total.ok || !empty.ok) return null;
+  const grams = toScaled(total.value, 3) - toScaled(empty.value, 3);
+  if (grams <= 0n) return null;
+  const whole = grams / 1000n;
+  const frac = (grams % 1000n).toString().padStart(3, '0').replace(/0+$/, '');
+  return frac ? `${whole}.${frac}` : `${whole}`;
+}
+
 /** round(qty × price, 2) half-up — same rule as the server and the DB CHECK constraint. */
 export function previewTotal(qtyRaw: string, priceRaw: string): string | null {
   const q = checkPositive(qtyRaw, 3);
