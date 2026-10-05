@@ -37,7 +37,9 @@ export function PaymentFields({ value, onChange, errors, total, customers, onCus
   const hasCheque = Number(parts.chequeAmount) > 0;
   const hasCredit = Number(parts.creditAmount) > 0;
   const left = remainder(value, total);
-  const customerVisible = hasCredit || showCustomer || value.customerId !== null;
+  // Credit needs a customer: show the picker as soon as ණය is chosen, even before a
+  // quantity (and so a total) has been typed.
+  const customerVisible = hasCredit || value.mode === 'CREDIT' || showCustomer || value.customerId !== null;
 
   return (
     <>

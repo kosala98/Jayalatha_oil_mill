@@ -59,8 +59,10 @@ export function SettingsView() {
     e.preventDefault();
     if (!session) return;
     const next: Record<string, string> = {};
-    if (!/^\d{4,8}$/.test(currentPin)) next.currentPin = S.settings.pinFormat;
-    if (!/^\d{4,8}$/.test(newPin)) next.newPin = S.settings.pinFormat;
+    // Same rule as the server: any 4–64 characters, so "9999" and "mill-2026" both work.
+    const okPassword = (v: string) => v.length >= 4 && v.length <= 64;
+    if (!okPassword(currentPin)) next.currentPin = S.settings.pinFormat;
+    if (!okPassword(newPin)) next.newPin = S.settings.pinFormat;
     if (newPin !== repeatPin) next.repeatPin = S.settings.pinMismatch;
     setErrors(next);
     if (Object.keys(next).length) return;
@@ -121,12 +123,12 @@ export function SettingsView() {
           value={currentPin}
           onChange={setCurrentPin}
           error={errors.currentPin}
-          inputMode="numeric"
           type="password"
-          maxLength={8}
+          autoComplete="current-password"
+          maxLength={64}
         />
-        <Field label={S.settings.newPin} value={newPin} onChange={setNewPin} error={errors.newPin} inputMode="numeric" type="password" maxLength={8} />
-        <Field label={S.settings.repeatPin} value={repeatPin} onChange={setRepeatPin} error={errors.repeatPin} inputMode="numeric" type="password" maxLength={8} />
+        <Field label={S.settings.newPin} value={newPin} onChange={setNewPin} error={errors.newPin} type="password" autoComplete="new-password" maxLength={64} />
+        <Field label={S.settings.repeatPin} value={repeatPin} onChange={setRepeatPin} error={errors.repeatPin} type="password" autoComplete="new-password" maxLength={64} />
         <button type="submit" className="btn btn--primary btn--block" disabled={busy}>
           {busy ? S.common.saving : S.settings.submit}
         </button>
