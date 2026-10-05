@@ -18,10 +18,17 @@ type AnyRecord = HistoryRecord[ListedKind];
 const KINDS = (['sale', 'purchase', 'cash', 'payment'] as const).map((k) => ({ value: k, label: S.history.types[k] }));
 const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === code)?.nameSi ?? code;
 
+/**
+ * Which way the money moved for the mill: 'in' is an asset gained (a sale, cash put in
+ * the drawer, money received from a customer), 'out' a liability or outflow (a purchase,
+ * an expense, money paid to a customer).
+ */
+type Flow = 'in' | 'out';
+
 function describe(
   kind: HistoryKind,
   r: AnyRecord,
-): { title: string; detail: string; amount: string; cheque: string | null; split: string | null } {
+): { title: string; detail: string; amount: string; cheque: string | null; split: string | null; flow: Flow } {
   if (kind === 'sale') {
     const s = r as Sale;
     const unit = s.unitType === 'BOTTLE' && s.bottleSize
@@ -33,6 +40,7 @@ function describe(
       amount: s.total,
       cheque: Number(s.chequeAmount) > 0 ? s.chequeNumber : null,
       split: splitLabel(s),
+      flow: 'in',
     };
   }
   if (kind === 'purchase') {
@@ -43,6 +51,7 @@ function describe(
       amount: p.total,
       cheque: Number(p.chequeAmount) > 0 ? p.chequeNumber : null,
       split: splitLabel(p),
+      flow: 'out',
     };
   }
   if (kind === 'payment') {
@@ -57,10 +66,18 @@ function describe(
       amount: p.amount,
       cheque: p.method === 'CHEQUE' ? p.chequeNumber : null,
       split: null,
+      flow: p.direction === 'RECEIVED' ? 'in' : 'out',
     };
   }
   const c = r as CashEntry;
-  return { title: S.labels.cashTypes[c.type], detail: c.note ?? '', amount: c.amount, cheque: null, split: null };
+  return {
+    title: S.labels.cashTypes[c.type],
+    detail: c.note ?? '',
+    amount: c.amount,
+    cheque: null,
+    split: null,
+    flow: c.type === 'EXPENSE' ? 'out' : 'in',
+  };
 }
 
 /** "මුදල් 2,000 · චෙක් 2,000 · ණය 6,000" — only the parts that are actually used. */
@@ -159,6 +176,10 @@ export function HistoryView() {
         <input type="checkbox" checked={includeDeleted} onChange={(e) => setIncludeDeleted(e.target.checked)} />
         {S.history.showDeleted}
       </label>
+      <p className="history__legend small">
+        <span className="history__amount--in">+ {S.history.flowIn}</span>
+        <span className="history__amount--out">− {S.history.flowOut}</span>
+      </p>
 
       {error && (
         <div className="card notice">
@@ -189,7 +210,10 @@ export function HistoryView() {
                   {r.isDeleted && r.deleteReason && <span className="history__reason">{r.deleteReason}</span>}
                 </div>
                 <div className="history__side">
-                  <span className="history__amount">{formatMoney(d.amount)}</span>
+                  <span className={`history__amount history__amount--${d.flow}`}>
+                    {d.flow === 'in' ? '+ ' : '− '}
+                    {formatMoney(d.amount)}
+                  </span>
                   {!r.isDeleted && (
                     <button
                       type="button"

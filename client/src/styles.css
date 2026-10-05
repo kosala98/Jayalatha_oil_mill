@@ -780,6 +780,21 @@ button {
 .history__row.is-deleted .history__detail {
   opacity: 0.6;
 }
+/* Which way the money moved: green for what the mill gains, red for what goes out.
+   The +/− sign carries the same meaning for anyone who can't tell the colours apart. */
+.history__amount--in {
+  color: var(--palm);
+}
+.history__amount--out {
+  color: var(--danger);
+}
+.history__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  font-weight: 600;
+}
 .history__row.is-deleted .history__amount {
   text-decoration: line-through;
   color: var(--muted);
