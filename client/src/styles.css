@@ -1719,13 +1719,6 @@ button {
     padding-bottom: 4px;
   }
 
-  /* අවසන් ගනුදෙනු: last sales and last purchases side by side. */
-  .recent-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-    column-gap: 24px;
-  }
-
   .form--narrow {
     max-width: 640px;
     width: 100%;

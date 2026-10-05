@@ -425,8 +425,7 @@ export const si = {
     byMaterial: 'මිලදී ගැනීම් — ද්‍රව්‍ය අනුව',
   },
   recent: {
-    sales: 'අවසන් විකුණුම් 5',
-    purchases: 'අවසන් මිලදී ගැනීම් 5',
+    title: 'අවසන් ගනුදෙනු 5',
     empty: 'තවම සටහන් නැත.',
   },
   history: {
