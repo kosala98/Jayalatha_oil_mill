@@ -1706,21 +1706,24 @@ button {
   .entry > .btn--quiet {
     grid-column: 1 / -1;
   }
-  .entry__main,
-  .entry > .entry__recent {
+  .entry__main {
     grid-column: 1;
   }
   .entry__side {
     grid-column: 2;
-    /* Spans the inputs and the recent list below them, so the list sits right under
-       the form instead of below the (taller) payment panel. */
-    grid-row: span 2;
     position: sticky;
     top: 56px; /* below the sticky tabs */
     max-height: calc(100dvh - 68px);
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: 4px;
+  }
+
+  /* අවසන් ගනුදෙනු: last sales and last purchases side by side. */
+  .recent-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 24px;
   }
 
   .form--narrow {

@@ -12,6 +12,7 @@ export const si = {
     sale: 'විකුණුම්',
     purchase: 'මිලදී ගැනීම්',
     cash: 'මුදල්',
+    recent: 'අවසන් ගනුදෙනු',
     combined: 'එකට',
     customers: 'ගනුදෙනුකරු',
     admin: 'පරිපාලක',

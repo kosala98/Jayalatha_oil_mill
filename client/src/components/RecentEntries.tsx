@@ -41,7 +41,7 @@ export function RecentEntries({ kind }: { kind: 'sale' | 'purchase' }) {
   if (rows === null) return null;
 
   return (
-    <section className="card entry__recent">
+    <section className="card">
       <h3 className="card__title">{kind === 'sale' ? S.recent.sales : S.recent.purchases}</h3>
       {rows.length === 0 ? (
         <p className="muted small">{S.recent.empty}</p>

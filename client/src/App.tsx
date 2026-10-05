@@ -14,10 +14,11 @@ import { CombinedScreen } from './screens/CombinedScreen';
 import { CustomersScreen } from './screens/CustomersScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { PurchaseScreen } from './screens/PurchaseScreen';
+import { RecentScreen } from './screens/RecentScreen';
 import { SaleScreen } from './screens/SaleScreen';
 
-type Tab = 'sale' | 'purchase' | 'cash' | 'combined' | 'customers' | 'admin';
-const COUNTER_TABS: Tab[] = ['sale', 'purchase', 'cash', 'customers'];
+type Tab = 'sale' | 'purchase' | 'cash' | 'recent' | 'combined' | 'customers' | 'admin';
+const COUNTER_TABS: Tab[] = ['sale', 'purchase', 'cash', 'recent', 'customers'];
 
 export function App() {
   return (
@@ -127,6 +128,8 @@ function Shell() {
               {id === 'purchase' && <PurchaseScreen />}
               {id === 'cash' && <CashScreen />}
               {id === 'combined' && <CombinedScreen />}
+              {/* Loaded when opened, then kept current by live updates. */}
+              {id === 'recent' && current === id && <RecentScreen />}
               {/* Mounted only while it is the open tab: a profile read earlier would
                   otherwise still show the balance from before this morning's sales. */}
               {id === 'customers' && current === id && <CustomersScreen />}

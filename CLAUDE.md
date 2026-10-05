@@ -53,7 +53,8 @@ Vercel builds from the repo root with `vercel.json` (installs and builds `client
 ## Layout
 
 - Mobile-first CSS in `client/src/styles.css`. The phone layout must not change. Wide-screen rules live only in the "Wider screens" section at the end of the file (`min-width: 900px` and `1280px`, plus `(hover: hover)` for mouse hover).
-- Sale, purchase and visit forms are `form.stack.entry` with `.entry__main` (the inputs) and `.entry__side` (readout, payment, errors, save buttons), plus an optional `.entry__recent` card. On wide screens the main and recent parts form the left column, and the side panel is sticky on the right, spanning two rows. Sale and purchase show `<RecentEntries>` (`GET /api/{sales,purchases}/recent`: any session, last 5 live rows with `customerName`). New entry-style screens should follow the same structure. Single-purpose forms use `.form--narrow`.
+- Sale, purchase and visit forms are `form.stack.entry` with two children: `.entry__main` (the inputs) and `.entry__side` (readout, payment, errors, save buttons). On wide screens they become two columns, and the side panel is sticky. New entry-style screens should follow the same structure. Single-purpose forms use `.form--narrow`.
+- The අවසන් ගනුදෙනු tab (`RecentScreen`) shows two `<RecentEntries>` cards side by side (`.recent-grid`). They read `GET /api/{sales,purchases}/recent`: any session, the last 5 live rows with `customerName`. New entry-style screens should follow the same structure. Single-purpose forms use `.form--narrow`.
 
 ## Printing
 
