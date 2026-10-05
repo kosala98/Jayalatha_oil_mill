@@ -429,7 +429,7 @@ export const si = {
     empty: 'තවම සටහන් නැත.',
   },
   history: {
-    types: { sale: 'විකුණුම්', purchase: 'මිලදී ගැනීම්', cash: 'මුදල්', payment: 'ගෙවීම්', customer: 'ගනුදෙනුකරු' },
+    types: { sale: 'විකුණුම්', purchase: 'මිලදී ගැනීම්', cash: 'මුදල්', payment: 'ලැබීම්/ගෙවීම්', customer: 'ගනුදෙනුකරු' },
     period: 'කාල සීමාව',
     type: 'ගනුදෙනු වර්ගය',
     showDeleted: 'මකා දැමූ ඒවාද පෙන්වන්න',
