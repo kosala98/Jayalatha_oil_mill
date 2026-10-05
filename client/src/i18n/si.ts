@@ -423,6 +423,11 @@ export const si = {
     byProduct: 'විකුණුම් — නිෂ්පාදන අනුව',
     byMaterial: 'මිලදී ගැනීම් — ද්‍රව්‍ය අනුව',
   },
+  recent: {
+    sales: 'අවසන් විකුණුම් 5',
+    purchases: 'අවසන් මිලදී ගැනීම් 5',
+    empty: 'තවම සටහන් නැත.',
+  },
   history: {
     types: { sale: 'විකුණුම්', purchase: 'මිලදී ගැනීම්', cash: 'මුදල්', payment: 'ගෙවීම්', customer: 'ගනුදෙනුකරු' },
     period: 'කාල සීමාව',

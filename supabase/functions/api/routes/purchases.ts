@@ -14,7 +14,7 @@ import { requireAdmin, requireSession } from '../middleware/auth.ts';
 import { writeAudit } from '../services/audit.ts';
 import { lockCharcoalStock } from '../services/charcoal.ts';
 import { requireLiveCustomer } from '../services/customers.ts';
-import { findByClientId, listRows } from './helpers.ts';
+import { findByClientId, listRows, recentRows } from './helpers.ts';
 
 export const purchasesRouter = new Hono<AppEnv>();
 
@@ -58,6 +58,9 @@ purchasesRouter.post('/', requireSession, async (c) => {
     throw err;
   }
 });
+
+/** The last few purchases, for the counter's own check under the purchase form. */
+purchasesRouter.get('/recent', requireSession, async (c) => c.json(await recentRows('purchases')));
 
 purchasesRouter.get('/', requireAdmin, async (c) => {
   const q = listQuerySchema.parse(c.req.query());

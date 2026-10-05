@@ -15,6 +15,7 @@ import { applyPrices, usePrices } from '../lib/usePrices';
 import { api } from '../api/endpoints';
 import { useSubmit } from '../lib/useSubmit';
 import { BasketStrip } from '../components/BasketStrip';
+import { RecentEntries } from '../components/RecentEntries';
 import { useToast } from '../components/Toast';
 import { addLine, basketNet, basketPayments, useBasket } from '../domain/basket';
 import { goToTab } from '../lib/navigation';
@@ -300,6 +301,8 @@ export function PurchaseScreen() {
           </>
         )}
       </div>
+
+      <RecentEntries kind="purchase" />
     </form>
   );
 }

@@ -16,7 +16,7 @@ import { requireAdmin, requireSession } from '../middleware/auth.ts';
 import { writeAudit } from '../services/audit.ts';
 import { charcoalStockKg, lockCharcoalStock } from '../services/charcoal.ts';
 import { requireLiveCustomer } from '../services/customers.ts';
-import { findByClientId, listRows } from './helpers.ts';
+import { findByClientId, listRows, recentRows } from './helpers.ts';
 
 export const salesRouter = new Hono<AppEnv>();
 
@@ -85,6 +85,9 @@ salesRouter.post('/', requireSession, async (c) => {
     throw err;
   }
 });
+
+/** The last few sales, for the counter's own check under the sale form. */
+salesRouter.get('/recent', requireSession, async (c) => c.json(await recentRows('sales')));
 
 salesRouter.get('/', requireAdmin, async (c) => {
   const q = listQuerySchema.parse(c.req.query());

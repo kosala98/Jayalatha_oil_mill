@@ -33,6 +33,11 @@ export interface HistoryRecord {
 export const api = {
   products: () => request<Product[]>('/api/products', { timeoutMs: 6000 }),
 
+  /** The last five sales / purchases, for the counter's check under the form. */
+  recentSales: () => request<(Sale & { customerName?: string | null })[]>('/api/sales/recent', { timeoutMs: 8000 }),
+  recentPurchases: () =>
+    request<(Purchase & { customerName?: string | null })[]>('/api/purchases/recent', { timeoutMs: 8000 }),
+
   stats: (period: Period, token: string) => request<Stats>(`/api/stats?period=${period}`, { token }),
 
   list<K extends HistoryKind>(kind: K, q: { period: Period; cursor?: string | null; includeDeleted?: boolean }, token: string) {

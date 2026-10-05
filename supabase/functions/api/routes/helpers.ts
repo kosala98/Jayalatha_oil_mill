@@ -29,6 +29,24 @@ export async function listRows(table: 'sales' | 'purchases' | 'cash_entries' | '
   return page(rows, q.limit);
 }
 
+/** How many recent rows the counter screens show under the form. */
+export const RECENT_LIMIT = 5;
+
+/**
+ * The latest few live rows, with the customer's name, for the counter to check what it
+ * just entered. Any signed-in account may read these; the full history stays admin-only.
+ */
+export async function recentRows(table: 'sales' | 'purchases') {
+  const t = sql(table);
+  return await sql<Row[]>`
+    SELECT ${cols(sql, table)},
+           (SELECT name FROM customers c WHERE c.id = ${t}.customer_id) AS customer_name
+    FROM ${t}
+    WHERE is_deleted = false
+    ORDER BY occurred_at DESC, id DESC
+    LIMIT ${RECENT_LIMIT}`;
+}
+
 export function page<T extends { id: string }>(rows: T[], limit: number) {
   const hasMore = rows.length > limit;
   const items = hasMore ? rows.slice(0, limit) : rows;
