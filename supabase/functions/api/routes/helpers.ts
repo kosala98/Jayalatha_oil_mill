@@ -7,14 +7,19 @@ import type { listQuerySchema } from '../lib/validation.ts';
 export type ListQuery = z.infer<typeof listQuerySchema>;
 
 /**
- * History list shared by sales, purchases and cash entries: newest first, filtered by
- * period, keyset-paginated on (occurred_at, id) starting after the cursor row.
+ * History list shared by sales, purchases, cash entries and customer payments: newest
+ * first, filtered by period, keyset-paginated on (occurred_at, id) after the cursor row.
+ * Payments also carry the customer's name, which is the first thing the history shows.
  */
-export async function listRows(table: 'sales' | 'purchases' | 'cash_entries', q: ListQuery) {
+export async function listRows(table: 'sales' | 'purchases' | 'cash_entries' | 'customer_payments', q: ListQuery) {
   const from = periodStart(q.period, config.businessUtcOffsetMinutes);
   const t = sql(table);
+  const customerName =
+    table === 'customer_payments'
+      ? sql`, (SELECT name FROM customers c WHERE c.id = customer_payments.customer_id) AS customer_name`
+      : sql``;
   const rows = await sql<Row[]>`
-    SELECT ${cols(sql, table)} FROM ${t}
+    SELECT ${cols(sql, table)} ${customerName} FROM ${t}
     WHERE true
       ${q.includeDeleted ? sql`` : sql`AND is_deleted = false`}
       ${from ? sql`AND occurred_at >= ${from}` : sql``}

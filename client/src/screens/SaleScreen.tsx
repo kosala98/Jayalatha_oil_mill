@@ -99,8 +99,9 @@ export function SaleScreen() {
 
   function validate(): SaleInput | null {
     const e: Errors = {};
-    const q = checkPositive(quantity, isBottle ? 0 : 3);
-    if (!q.ok) e.quantity = isBottle && q.reason === 'decimals' ? S.validation.wholeBottles : S.validation.quantity;
+    // Part bottles are fine (1.5 bottles): every unit takes up to 3 decimals.
+    const q = checkPositive(quantity, 3);
+    if (!q.ok) e.quantity = q.reason === 'decimals' ? S.validation.tooManyDecimals : S.validation.quantity;
     const p = checkPositive(price, 2);
     if (!p.ok) e.price = p.reason === 'decimals' ? S.validation.tooManyDecimals : S.validation.price;
     if (isOther && customName.trim().length < 1) e.customName = S.validation.customName;
@@ -319,7 +320,6 @@ export function SaleScreen() {
               value={quantity}
               onChange={setQuantity}
               error={errors.quantity}
-              integer={isBottle}
               suffix={isBottle ? undefined : S.labels.units[unitType]}
               readOnly={weighing}
             />

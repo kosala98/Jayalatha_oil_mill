@@ -182,9 +182,7 @@ export const createSaleSchema = z
       if (!v.bottleSize) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['bottleSize'], message: 'Bottle size is required' });
       }
-      if (!/^\d+(\.0+)?$/.test(v.quantity)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantity'], message: 'Bottle quantity must be a whole number' });
-      }
+      // Part bottles are allowed (customers ask for 1.5 bottles); up to 3 decimals, like any quantity.
     }
   })
   .transform((v) => ({

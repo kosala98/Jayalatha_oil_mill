@@ -1,4 +1,5 @@
 import type {
+  CustomerPayment,
   CashEntry,
   ChequeDay,
   Customer,
@@ -26,7 +27,7 @@ export interface HistoryRecord {
   sale: Sale;
   purchase: Purchase;
   cash: CashEntry;
-  payment: { id: string; amount: string; isDeleted: boolean };
+  payment: CustomerPayment;
 }
 
 export const api = {

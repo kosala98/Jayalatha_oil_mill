@@ -80,6 +80,20 @@ export interface CashEntry extends SoftDeletable {
   note: string | null;
 }
 
+/** Money received from or paid to a customer: a settlement, or a loan either way. */
+export interface CustomerPayment extends SoftDeletable {
+  customerId: string;
+  /** Joined in by the history list. */
+  customerName?: string | null;
+  kind: 'SETTLEMENT' | 'LOAN';
+  direction: 'RECEIVED' | 'PAID';
+  method: 'CASH' | 'CHEQUE';
+  amount: string;
+  chequeNumber: string | null;
+  chequeDepositDate: string | null;
+  note: string | null;
+}
+
 export interface Page<T> {
   items: T[];
   nextCursor: string | null;

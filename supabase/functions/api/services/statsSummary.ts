@@ -272,7 +272,8 @@ export function summarise(input: {
       productCode,
       liters: qty(p.liters),
       kg: qty(p.kg),
-      bottles: p.bottles.toFixed(0),
+      // Part bottles are allowed, so no rounding: "1.5", "3".
+      bottles: p.bottles.toFixed(),
       total: money(p.total),
       count: p.count,
     })),

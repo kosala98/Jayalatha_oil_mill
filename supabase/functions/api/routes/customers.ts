@@ -9,12 +9,13 @@ import {
   customerListQuerySchema,
   deleteSchema,
   idParamSchema,
+  listQuerySchema,
   updateCustomerSchema,
 } from '../lib/validation.ts';
 import { requireAdmin, requireSession } from '../middleware/auth.ts';
 import { writeAudit } from '../services/audit.ts';
 import { balanceFor, balancesFor, requireLiveCustomer } from '../services/customers.ts';
-import { findByClientId } from './helpers.ts';
+import { findByClientId, listRows } from './helpers.ts';
 
 /** The partial unique index that keeps one live ledger per name. */
 const NAME_UNIQUE = 'customers_name_unique_live';
@@ -237,6 +238,12 @@ customerPaymentsRouter.post('/', requireSession, async (c) => {
     }
     throw err;
   }
+});
+
+/** History: money received from and paid to customers, settlements and loans alike. */
+customerPaymentsRouter.get('/', requireAdmin, async (c) => {
+  const q = listQuerySchema.parse(c.req.query());
+  return c.json(await listRows('customer_payments', q));
 });
 
 customerPaymentsRouter.delete('/:id', requireAdmin, async (c) => {

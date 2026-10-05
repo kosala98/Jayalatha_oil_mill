@@ -6,16 +6,16 @@ import { Dialog } from '../../components/Dialog';
 import { Segmented } from '../../components/Segmented';
 import { useToast } from '../../components/Toast';
 import { FALLBACK_PRODUCTS } from '../../domain/catalog';
-import type { CashEntry, Period, Purchase, Sale } from '../../domain/types';
+import type { CashEntry, CustomerPayment, Period, Purchase, Sale } from '../../domain/types';
 import { S } from '../../i18n';
 import { formatMoney, formatStamp, formatQty } from '../../lib/numbers';
 import { PeriodPicker } from './PeriodPicker';
 import { useLatestGuard, useLiveRefresh, useNewDayRefresh } from '../../lib/live';
 
-/** The history screen lists sales, purchases and cash entries (not settlements). */
-type ListedKind = Exclude<HistoryKind, 'payment'>;
+/** Sales, purchases, cash entries, and money received from or paid to customers. */
+type ListedKind = HistoryKind;
 type AnyRecord = HistoryRecord[ListedKind];
-const KINDS = (['sale', 'purchase', 'cash'] as const).map((k) => ({ value: k, label: S.history.types[k] }));
+const KINDS = (['sale', 'purchase', 'cash', 'payment'] as const).map((k) => ({ value: k, label: S.history.types[k] }));
 const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === code)?.nameSi ?? code;
 
 function describe(
@@ -43,6 +43,20 @@ function describe(
       amount: p.total,
       cheque: Number(p.chequeAmount) > 0 ? p.chequeNumber : null,
       split: splitLabel(p),
+    };
+  }
+  if (kind === 'payment') {
+    const p = r as CustomerPayment;
+    const what = p.direction === 'RECEIVED' ? S.customers.directionReceived : S.customers.directionPaid;
+    const how = [p.kind === 'LOAN' ? S.labels.ledgerKinds.loan : null, S.labels.payment[p.method], p.note]
+      .filter(Boolean)
+      .join(' · ');
+    return {
+      title: `${p.customerName ?? ''} · ${what}`,
+      detail: how,
+      amount: p.amount,
+      cheque: p.method === 'CHEQUE' ? p.chequeNumber : null,
+      split: null,
     };
   }
   const c = r as CashEntry;
@@ -105,7 +119,7 @@ export function HistoryView() {
     void load(null);
   }, [load]);
   // A new or deleted row elsewhere: reload the first page (older pages are fetched again on demand).
-  useLiveRefresh(['sales', 'purchases', 'cash_entries'], () => {
+  useLiveRefresh(['sales', 'purchases', 'cash_entries', 'customer_payments', 'customers'], () => {
     setCursor(null);
     void load(null);
   });
