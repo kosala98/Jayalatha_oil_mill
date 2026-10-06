@@ -1,18 +1,19 @@
 import type { z } from 'zod';
 import { config } from '../config.ts';
 import { cols, type Row, sql, type Table } from '../db.ts';
-import { periodStart } from '../lib/period.ts';
+import { dayRange, periodStart } from '../lib/period.ts';
 import type { listQuerySchema } from '../lib/validation.ts';
 
 export type ListQuery = z.infer<typeof listQuerySchema>;
 
 /**
  * History list shared by sales, purchases, cash entries and customer payments: newest
- * first, filtered by period, keyset-paginated on (occurred_at, id) after the cursor row.
+ * first, filtered by period (or a calendar day range), keyset-paginated on (occurred_at, id) after the cursor row.
  * Payments also carry the customer's name, which is the first thing the history shows.
  */
 export async function listRows(table: 'sales' | 'purchases' | 'cash_entries' | 'customer_payments', q: ListQuery) {
-  const from = periodStart(q.period, config.businessUtcOffsetMinutes);
+  const range = q.from ? dayRange(q.from, q.to, config.businessUtcOffsetMinutes) : null;
+  const from = range ? range.from : periodStart(q.period, config.businessUtcOffsetMinutes);
   const t = sql(table);
   const customerName =
     table === 'customer_payments'
@@ -23,6 +24,7 @@ export async function listRows(table: 'sales' | 'purchases' | 'cash_entries' | '
     WHERE true
       ${q.includeDeleted ? sql`` : sql`AND is_deleted = false`}
       ${from ? sql`AND occurred_at >= ${from}` : sql``}
+      ${range ? sql`AND occurred_at < ${range.until}` : sql``}
       ${q.cursor ? sql`AND (occurred_at, id) < (SELECT occurred_at, id FROM ${t} WHERE id = ${q.cursor})` : sql``}
     ORDER BY occurred_at DESC, id DESC
     LIMIT ${q.limit + 1}`; // one extra to know if there's another page

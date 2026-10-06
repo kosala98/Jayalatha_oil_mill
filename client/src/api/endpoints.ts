@@ -40,8 +40,17 @@ export const api = {
 
   stats: (period: Period, token: string) => request<Stats>(`/api/stats?period=${period}`, { token }),
 
-  list<K extends HistoryKind>(kind: K, q: { period: Period; cursor?: string | null; includeDeleted?: boolean }, token: string) {
+  list<K extends HistoryKind>(
+    kind: K,
+    q: { period: Period; range?: { from: string; to: string } | null; cursor?: string | null; includeDeleted?: boolean },
+    token: string,
+  ) {
     const params = new URLSearchParams({ period: q.period, limit: '50' });
+    // A chosen calendar range replaces the period on the server.
+    if (q.range) {
+      params.set('from', q.range.from);
+      params.set('to', q.range.to);
+    }
     if (q.cursor) params.set('cursor', q.cursor);
     if (q.includeDeleted) params.set('includeDeleted', 'true');
     return request<Page<HistoryRecord[K]>>(`${COLLECTION_PATH[kind]}?${params}`, { token });

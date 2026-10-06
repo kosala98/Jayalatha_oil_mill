@@ -8,7 +8,8 @@ export interface SegmentOption<T extends string | number> {
 interface Props<T extends string | number> {
   label: string;
   options: readonly SegmentOption<T>[];
-  value: T;
+  /** null: nothing selected (another control is choosing instead). */
+  value: T | null;
   onChange(value: NoInfer<T>): void;
   /** Visually hide the label (still read by screen readers). */
   hideLabel?: boolean;
@@ -46,7 +47,7 @@ export function Segmented<T extends string | number>({ label, options, value, on
               type="button"
               role="radio"
               aria-checked={checked}
-              tabIndex={checked ? 0 : -1}
+              tabIndex={checked || (value === null && i === 0) ? 0 : -1}
               className="segmented__option"
               onClick={() => onChange(o.value)}
               onKeyDown={(e) => onKeyDown(e, i)}

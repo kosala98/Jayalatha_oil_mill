@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { periodStart } from './period.ts';
+import { dayRange, periodStart } from './period.ts';
 
 const LK = 330; // UTC+5:30
 
@@ -39,4 +39,17 @@ test('month and year', () => {
 
 test('all has no lower bound', () => {
   assert.equal(periodStart('all', LK), undefined);
+});
+
+test('a day range covers whole local days, inclusive of the last', () => {
+  const r = dayRange('2026-10-01', '2026-10-06', LK);
+  assert.equal(r.from.toISOString(), '2026-09-30T18:30:00.000Z');
+  assert.equal(r.until.toISOString(), '2026-10-06T18:30:00.000Z');
+});
+
+test('a single-day range, and a "to" before "from", are that one day', () => {
+  const one = dayRange('2026-10-06', undefined, LK);
+  assert.equal(one.from.toISOString(), '2026-10-05T18:30:00.000Z');
+  assert.equal(one.until.toISOString(), '2026-10-06T18:30:00.000Z');
+  assert.deepEqual(dayRange('2026-10-06', '2026-10-01', LK), one);
 });
