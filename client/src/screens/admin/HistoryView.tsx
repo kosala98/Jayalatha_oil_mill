@@ -31,9 +31,8 @@ function describe(
 ): { title: string; detail: string; amount: string; cheque: string | null; split: string | null; flow: Flow } {
   if (kind === 'sale') {
     const s = r as Sale;
-    const unit = s.unitType === 'BOTTLE' && s.bottleSize
-      ? `${S.labels.bottleSizes[s.bottleSize]} ${S.labels.units.BOTTLE}`
-      : S.labels.units[s.unitType];
+    // Bottles read as a count ("1 බෝතල්"), without the bottle size.
+    const unit = S.labels.units[s.unitType];
     return {
       title: productName(s.productCode),
       detail: `${formatQty(s.quantity)} ${unit} × ${formatMoney(s.pricePerUnit)}`,
