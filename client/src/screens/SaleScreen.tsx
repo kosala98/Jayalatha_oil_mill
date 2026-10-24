@@ -308,7 +308,7 @@ export function SaleScreen() {
           {isBottle && (
             <Segmented
               label={S.sale.bottleSize}
-              options={BOTTLE_SIZES.map((b) => ({ value: b, label: S.labels.bottleSizes[b] }))}
+              options={BOTTLE_SIZES.map((b) => ({ value: b, label: S.labels.bottleSizesShort[b] }))}
               value={bottleSize}
               onChange={setBottleSize}
             />

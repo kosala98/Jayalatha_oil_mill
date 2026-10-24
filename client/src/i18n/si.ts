@@ -471,6 +471,8 @@ export const si = {
   labels: {
     units: { LITER: 'ලීටර්', KG: 'KG', BOTTLE: 'බෝතල්' },
     bottleSizes: { QUARTER: '¼ L', HALF: '½ L', ONE: '1 L' },
+    /** The sale screen's size picker, under the බෝතල් ප්‍රමාණය label. */
+    bottleSizesShort: { QUARTER: '¼', HALF: '½', ONE: '1' },
     payment: { CASH: 'මුදල්', CHEQUE: 'චෙක්පත්', CREDIT: 'ණය' },
     materials: { COPRA: 'කොප්පරා', CHARCOAL: 'පොල්කටු අඟුරු', OTHER: 'වෙනත්' },
     cashTypes: { OPENING_FLOAT: 'ආරම්භක මුදල', TOP_UP: 'මුදල් එකතු කිරීම', EXPENSE: 'වියදම්' },
