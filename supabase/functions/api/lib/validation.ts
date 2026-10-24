@@ -368,20 +368,27 @@ export const deleteSchema = z.object({
 
 export const idParamSchema = z.string().uuid();
 
+const dayParam = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD');
+
 export const listQuerySchema = z.object({
   period: periodSchema.default('today'),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   cursor: z.string().uuid().optional(),
   /** A calendar range of local days; when given it replaces `period`. */
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  from: dayParam.optional(),
+  to: dayParam.optional(),
   includeDeleted: z
     .enum(['true', 'false'])
     .optional()
     .transform((v) => v === 'true'),
 });
 
-export const statsQuerySchema = z.object({ period: periodSchema.default('today') });
+export const statsQuerySchema = z.object({
+  period: periodSchema.default('today'),
+  /** A calendar range of local days; when given it replaces `period`. */
+  from: dayParam.optional(),
+  to: dayParam.optional(),
+});
 
 /** Typed at sign-in; stored lower-case. */
 export const usernameSchema = z

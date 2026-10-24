@@ -3,15 +3,13 @@ import { api, type HistoryKind, type HistoryRecord } from '../../api/endpoints';
 import { describeError } from '../../api/errors';
 import { useSession } from '../../auth/Session';
 import { Dialog } from '../../components/Dialog';
-import { Field } from '../../components/Field';
 import { Segmented } from '../../components/Segmented';
 import { useToast } from '../../components/Toast';
 import { FALLBACK_PRODUCTS } from '../../domain/catalog';
-import { todayIso } from '../../domain/payment';
 import type { CashEntry, CustomerPayment, Period, Purchase, Sale } from '../../domain/types';
 import { S } from '../../i18n';
 import { formatMoney, formatStamp, formatQty } from '../../lib/numbers';
-import { PeriodPicker } from './PeriodPicker';
+import { type DayFilter, dayFilterRange, NO_DAYS, PeriodOrDays } from './PeriodPicker';
 import { useLatestGuard, useLiveRefresh, useNewDayRefresh } from '../../lib/live';
 
 /** Sales, purchases, cash entries, and money received from or paid to customers. */
@@ -97,10 +95,8 @@ export function HistoryView() {
   const toast = useToast();
   const [kind, setKind] = useState<ListedKind>('sale');
   const [period, setPeriod] = useState<Period>('today');
-  // Calendar days picked by hand ('YYYY-MM-DD'); while `dateFrom` is set it replaces the period.
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const range = dateFrom ? { from: dateFrom, to: dateTo && dateTo >= dateFrom ? dateTo : dateFrom } : null;
+  const [days, setDays] = useState<DayFilter>(NO_DAYS);
+  const range = dayFilterRange(days);
   const rangeFrom = range?.from;
   const rangeTo = range?.to;
   const [includeDeleted, setIncludeDeleted] = useState(false);
@@ -180,37 +176,7 @@ export function HistoryView() {
   return (
     <div className="stack">
       <Segmented label={S.history.type} hideLabel options={KINDS} value={kind} onChange={setKind} />
-      <PeriodPicker
-        value={range ? null : period}
-        onChange={(p) => {
-          setPeriod(p);
-          setDateFrom('');
-          setDateTo('');
-        }}
-      />
-      <div className="field-row">
-        <Field label={S.history.dateFrom} value={dateFrom} onChange={setDateFrom} type="date" max={todayIso()} />
-        <Field
-          label={S.history.dateTo}
-          value={dateTo}
-          onChange={setDateTo}
-          type="date"
-          min={dateFrom || undefined}
-          max={todayIso()}
-        />
-      </div>
-      {(dateFrom || dateTo) && (
-        <button
-          type="button"
-          className="btn btn--quiet btn--sm btn--block"
-          onClick={() => {
-            setDateFrom('');
-            setDateTo('');
-          }}
-        >
-          {S.history.clearDates}
-        </button>
-      )}
+      <PeriodOrDays period={period} days={days} onPeriod={setPeriod} onDays={setDays} />
       <label className="check">
         <input type="checkbox" checked={includeDeleted} onChange={(e) => setIncludeDeleted(e.target.checked)} />
         {S.history.showDeleted}

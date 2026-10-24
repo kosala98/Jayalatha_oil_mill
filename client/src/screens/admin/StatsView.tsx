@@ -11,7 +11,7 @@ import type { Period, Stats } from '../../domain/types';
 import { S, t } from '../../i18n';
 import { uuid } from '../../lib/ids';
 import { formatMoney, formatQty } from '../../lib/numbers';
-import { PeriodPicker } from './PeriodPicker';
+import { type DayFilter, dayFilterRange, NO_DAYS, PeriodOrDays } from './PeriodPicker';
 import { LEDGER_TABLES, useLatestGuard, useLiveRefresh, useNewDayRefresh } from '../../lib/live';
 
 const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === code)?.nameSi ?? code;
@@ -19,6 +19,10 @@ const productName = (code: string) => FALLBACK_PRODUCTS.find((p) => p.code === c
 export function StatsView() {
   const { session, handleAuthError } = useSession();
   const [period, setPeriod] = useState<Period>('today');
+  const [days, setDays] = useState<DayFilter>(NO_DAYS);
+  const range = dayFilterRange(days);
+  const rangeFrom = range?.from;
+  const rangeTo = range?.to;
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,14 +35,15 @@ export function StatsView() {
     setLoading(true);
     setError(null);
     try {
-      const next = await api.stats(period, session.token);
+      const range = rangeFrom && rangeTo ? { from: rangeFrom, to: rangeTo } : null;
+      const next = await api.stats(period, range, session.token);
       if (isCurrent()) setStats(next);
     } catch (err) {
       if (isCurrent() && !handleAuthError(err)) setError(describeError(err));
     } finally {
       if (isCurrent()) setLoading(false);
     }
-  }, [period, session, handleAuthError, begin]);
+  }, [period, rangeFrom, rangeTo, session, handleAuthError, begin]);
 
   useEffect(() => {
     void load();
@@ -48,7 +53,7 @@ export function StatsView() {
 
   return (
     <div className="stack">
-      <PeriodPicker value={period} onChange={setPeriod} />
+      <PeriodOrDays period={period} days={days} onPeriod={setPeriod} onDays={setDays} />
 
       {error && (
         <div className="card notice">

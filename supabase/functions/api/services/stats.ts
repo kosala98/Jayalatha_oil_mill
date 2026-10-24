@@ -1,17 +1,22 @@
 import { config } from '../config.ts';
 import { type Row, transaction } from '../db.ts';
-import { type Period, periodStart } from '../lib/period.ts';
+import { dayRange, type Period, periodStart } from '../lib/period.ts';
 import { type Stats, summarise } from './statsSummary.ts';
 
 export type { Stats };
 
-/** Reads everything in one REPEATABLE READ snapshot so the numbers agree with each other. */
-export async function computeStats(period: Period): Promise<Stats> {
+/**
+ * Reads everything in one REPEATABLE READ snapshot so the numbers agree with each other.
+ * `days` (local calendar days, inclusive) replaces `period` when given.
+ */
+export async function computeStats(period: Period, days?: { from: string; to?: string }): Promise<Stats> {
   const now = new Date();
-  const from = periodStart(period, config.businessUtcOffsetMinutes, now);
+  const range = days ? dayRange(days.from, days.to, config.businessUtcOffsetMinutes) : null;
+  const from = range ? range.from : periodStart(period, config.businessUtcOffsetMinutes, now);
+  const until = range?.until;
 
   return await transaction(async (tx) => {
-    const inPeriod = from ? tx`AND occurred_at >= ${from}` : tx``;
+    const inPeriod = tx`${from ? tx`AND occurred_at >= ${from}` : tx``} ${until ? tx`AND occurred_at < ${until}` : tx``}`;
 
     const [products, sales, purchases, cash, counts, payments, allTime] = await Promise.all([
       tx<{ code: string; isCharcoal: boolean }[]>`SELECT code, is_charcoal FROM products`,
@@ -59,6 +64,7 @@ export async function computeStats(period: Period): Promise<Stats> {
     return summarise({
       period,
       from,
+      until,
       now,
       charcoalCodes: new Set(products.filter((p) => p.isCharcoal).map((p) => p.code)),
       sales: sales.map((g) => ({

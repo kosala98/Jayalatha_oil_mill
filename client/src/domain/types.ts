@@ -102,6 +102,8 @@ export interface Page<T> {
 export interface Stats {
   period: Period;
   from: string | null;
+  /** End of a chosen day range (exclusive); null for a period. */
+  until: string | null;
   generatedAt: string;
   cashBalance: string;
   cash: {

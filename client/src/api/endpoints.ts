@@ -38,7 +38,15 @@ export const api = {
   recentPurchases: () =>
     request<(Purchase & { customerName?: string | null })[]>('/api/purchases/recent', { timeoutMs: 8000 }),
 
-  stats: (period: Period, token: string) => request<Stats>(`/api/stats?period=${period}`, { token }),
+  stats(period: Period, range: { from: string; to: string } | null, token: string) {
+    const params = new URLSearchParams({ period });
+    // A chosen calendar range replaces the period on the server.
+    if (range) {
+      params.set('from', range.from);
+      params.set('to', range.to);
+    }
+    return request<Stats>(`/api/stats?${params}`, { token });
+  },
 
   list<K extends HistoryKind>(
     kind: K,

@@ -51,6 +51,8 @@ export interface ProductBreakdown {
 export interface Stats {
   period: Period;
   from: string | null;
+  /** End of a chosen day range (exclusive); null for a period, which runs up to now. */
+  until: string | null;
   generatedAt: string;
   cashBalance: string;
   cash: {
@@ -115,6 +117,7 @@ export interface AllTimeTotals {
 export function summarise(input: {
   period: Period;
   from: Date | undefined;
+  until?: Date;
   now: Date;
   charcoalCodes: Set<string>;
   sales: SaleGroup[];
@@ -216,6 +219,7 @@ export function summarise(input: {
   return {
     period: input.period,
     from: input.from ? input.from.toISOString() : null,
+    until: input.until ? input.until.toISOString() : null,
     generatedAt: input.now.toISOString(),
     cashBalance: money(cashBalance),
     cash: {

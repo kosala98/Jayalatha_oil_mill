@@ -7,6 +7,6 @@ import { computeStats } from '../services/stats.ts';
 export const statsRouter = new Hono<AppEnv>();
 
 statsRouter.get('/', requireAdmin, async (c) => {
-  const { period } = statsQuerySchema.parse(c.req.query());
-  return c.json(await computeStats(period));
+  const { period, from, to } = statsQuerySchema.parse(c.req.query());
+  return c.json(await computeStats(period, from ? { from, to } : undefined));
 });
