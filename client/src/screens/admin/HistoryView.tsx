@@ -34,7 +34,7 @@ function describe(
     // Bottles read as a count ("1 බෝතල්"), without the bottle size.
     const unit = S.labels.units[s.unitType];
     return {
-      title: productName(s.productCode),
+      title: s.customName ?? productName(s.productCode),
       detail: `${formatQty(s.quantity)} ${unit} × ${formatMoney(s.pricePerUnit)}`,
       amount: s.total,
       cheque: Number(s.chequeAmount) > 0 ? s.chequeNumber : null,

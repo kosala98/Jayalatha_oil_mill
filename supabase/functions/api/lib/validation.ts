@@ -84,6 +84,15 @@ const depositDate = z
     return t > Date.now() - years && t < Date.now() + years;
   }, 'Deposit date is out of range');
 
+/** A real calendar day: "2026-02-30" has the right shape but would turn into an invalid Date. */
+const dayParam = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
+  .refine((v) => {
+    const t = Date.parse(`${v}T00:00:00Z`);
+    return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === v;
+  }, 'Not a real date');
+
 /** Any part of a split may be zero, so these are amounts, not positive amounts. */
 const part = nonNegativeDecimal('Amount', 2, AMOUNT_MAX).default('0');
 
@@ -333,11 +342,8 @@ export const customerLedgerQuerySchema = z.object({
 
 export const chequeQuerySchema = z
   .object({
-    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
-    to: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
-      .optional(),
+    from: dayParam,
+    to: dayParam.optional(),
   })
   .transform((v) => ({
     from: new Date(`${v.from}T00:00:00.000Z`),
@@ -367,8 +373,6 @@ export const deleteSchema = z.object({
 });
 
 export const idParamSchema = z.string().uuid();
-
-const dayParam = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD');
 
 export const listQuerySchema = z.object({
   period: periodSchema.default('today'),

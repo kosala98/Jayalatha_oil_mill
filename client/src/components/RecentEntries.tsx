@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/endpoints';
 import { describePayment } from '../domain/bill';
 import { FALLBACK_PRODUCTS } from '../domain/catalog';
+import { saleQuantity } from '../domain/saleLine';
 import type { Purchase, Sale } from '../domain/types';
 import { S } from '../i18n';
 import { useLatestGuard, useLiveRefresh } from '../lib/live';
@@ -63,11 +64,7 @@ export function RecentEntries() {
               ? e.row.customName ?? productName(e.row.productCode)
               : e.row.customName ?? S.labels.materials[e.row.material];
             const detail = isSale
-              ? `${formatQty(e.row.quantity)} ${
-                  e.row.unitType === 'BOTTLE' && e.row.bottleSize
-                    ? `${S.labels.bottleSizes[e.row.bottleSize]} ${S.labels.units.BOTTLE}`
-                    : S.labels.units[e.row.unitType]
-                } × ${formatMoney(e.row.pricePerUnit)}`
+              ? `${saleQuantity(formatQty(e.row.quantity), e.row.unitType, e.row.bottleSize)} × ${formatMoney(e.row.pricePerUnit)}`
               : `${formatQty(e.row.quantityKg)} KG × ${formatMoney(e.row.pricePerKg)}`;
             const how = describePayment({ ...r, chequeDepositDate: day(r.chequeDepositDate) }, formatMoney);
             return (

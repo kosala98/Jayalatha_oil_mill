@@ -15,6 +15,7 @@ import { uuid } from '../lib/ids';
 import { checkPositive, formatMoney, formatQty, formatStamp } from '../lib/numbers';
 import { useCustomers } from '../lib/useCustomers';
 import { FALLBACK_PRODUCTS } from '../domain/catalog';
+import { saleQuantity } from '../domain/saleLine';
 import { useSubmit } from '../lib/useSubmit';
 import { useLatestGuard, useLiveRefresh } from '../lib/live';
 
@@ -322,10 +323,7 @@ function CustomerProfileView({ id, onBack }: { id: string; onBack(): void }) {
                         checks when a figure is questioned. */}
                     {row.quantity && (
                       <span className="history__meta history__qty">
-                        {formatQty(row.quantity)}{' '}
-                        {row.unitType === 'BOTTLE' && row.bottleSize
-                          ? `${S.labels.bottleSizes[row.bottleSize]} ${S.labels.units.BOTTLE}`
-                          : S.labels.units[row.unitType ?? 'KG']}
+                        {saleQuantity(formatQty(row.quantity), row.unitType ?? 'KG', row.bottleSize)}
                         {row.unitPrice ? ` × ${formatMoney(row.unitPrice)}` : ''}
                       </span>
                     )}

@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { describePayment, newBillNo } from '../domain/bill';
+import { saleQuantity } from '../domain/saleLine';
 import { basketCustomerId, basketNet, basketPayments, clearBasket, removeLine, useBasket } from '../domain/basket';
 import { useToast } from '../components/Toast';
 import { S, t } from '../i18n';
@@ -86,11 +87,7 @@ export function CombinedScreen({ onBack, onSaved }: { onBack?(): void; onSaved?(
           name: line.label,
           detail:
             line.kind === 'sale'
-              ? `${line.quantity} ${
-                  line.unitType === 'BOTTLE' && line.bottleSize
-                    ? `${S.labels.bottleSizes[line.bottleSize]} ${S.labels.units.BOTTLE}`
-                    : S.labels.units[line.unitType]
-                } × ${formatMoney(line.price)}`
+              ? `${saleQuantity(line.quantity, line.unitType, line.bottleSize)} × ${formatMoney(line.price)}`
               : `${line.quantityKg} KG × ${formatMoney(line.price)}`,
           amount: line.total,
           how: describePayment(line, formatMoney),
@@ -148,7 +145,7 @@ export function CombinedScreen({ onBack, onSaved }: { onBack?(): void; onSaved?(
                   </span>
                   <span className="history__meta">
                     {line.kind === 'sale'
-                      ? `${line.quantity} ${S.labels.units[line.unitType]} × ${formatMoney(line.price)}`
+                      ? `${saleQuantity(line.quantity, line.unitType, line.bottleSize)} × ${formatMoney(line.price)}`
                       : `${line.quantityKg} KG × ${formatMoney(line.price)}`}
                   </span>
                   {/* How this line was paid, exactly as it was typed. */}

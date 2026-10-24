@@ -18,6 +18,7 @@ import { useSubmit } from '../lib/useSubmit';
 import { BasketStrip } from '../components/BasketStrip';
 import { useToast } from '../components/Toast';
 import { addLine, basketNet, basketPayments, useBasket } from '../domain/basket';
+import { saleQuantity } from '../domain/saleLine';
 import { goToTab } from '../lib/navigation';
 import { uuid } from '../lib/ids';
 import { api } from '../api/endpoints';
@@ -207,11 +208,7 @@ export function SaleScreen() {
         {
           side: 'out' as const,
           name: input.customName ?? product?.nameSi ?? '',
-          detail: `${input.quantity} ${
-            input.unitType === 'BOTTLE' && input.bottleSize
-              ? `${S.labels.bottleSizes[input.bottleSize]} ${S.labels.units.BOTTLE}`
-              : S.labels.units[input.unitType]
-          } × ${formatMoney(input.pricePerUnit)}${
+          detail: `${saleQuantity(input.quantity, input.unitType, input.bottleSize)} × ${formatMoney(input.pricePerUnit)}${
             weighing && weighedNet ? ` (${fullKg.trim()} − ${S.sale.containerShort} ${emptyKg.trim()})` : ''
           }`,
           amount: goodsTotal ?? '0',
